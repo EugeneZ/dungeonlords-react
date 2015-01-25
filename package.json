@@ -5,9 +5,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "watch": "watchify --debug client/main.js -o public/assets/scripts/client.js",
-    "postinstall": "./node_modules/browserify client/main.js > public/assets/scripts/client.js"
+    "start": "browserify client/main.js > public/assets/scripts/client.js && node server.js",
+    "watch": "watchify --debug client/main.js -o public/assets/scripts/client.js"
   },
   "dependencies": {
     "body-parser": "~1.10.1",
