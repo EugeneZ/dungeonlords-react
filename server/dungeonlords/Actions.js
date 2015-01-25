@@ -1,0 +1,17 @@
+module.exports = {
+    ASSIGN_PLAYER_ORDER: 1,
+    PHASE: 2,
+    GOLD: 3,
+    IMPS: 4,
+    FOOD: 5,
+    TUNNEL: 6,
+    REP: 7,
+    ROOM: 8,
+    TRAP: 9,
+    REVEAL_MONSTER: 10,
+    REVEAL_ROOM: 11,
+    MOVE_PALADIN: 12,
+    ASSIGN_SECRET_ORDER: 13,
+    REVEAL_ORDERS: 14,
+    PICK_INITIAL_ORDERS: 15
+};

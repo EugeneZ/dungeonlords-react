@@ -23,4 +23,18 @@ restify.serve(router, mongoose.model('User'), {
     }
 });
 
+restify.serve(router, mongoose.model('Game'), {
+    prereq: function(req) {
+        if (!req.user || !req.isAuthenticated()) {
+            return false;
+        }
+
+        if (req.method === 'PUT' || req.method === 'DELETE') {
+            return false; // no admins yet, no one can modify games once they have been created
+        }
+
+        return true;
+    }
+});
+
 module.exports = router;

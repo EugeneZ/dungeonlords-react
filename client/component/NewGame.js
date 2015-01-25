@@ -43,7 +43,7 @@ module.exports = React.createClass({
                     <div className="row">
                         <h2 className="col-sm-6 col-sm-offset-4">New Game</h2>
                     </div>
-                    <form className="form-horizontal">
+                    <form className="form-horizontal" onSubmit={this.onSubmit}>
                         <div className="form-group">
                             <label className="control-label col-sm-4" htmlFor="title">Title</label>
                             <div className="col-sm-6">
@@ -117,5 +117,10 @@ module.exports = React.createClass({
         var state = { dirty: true };
         state['player' + i] = e.target.value;
         this.setState(state, this.validate);
+    },
+
+    onSubmit: function(e) {
+        e.preventDefault();
+        this.getFlux().actions.newGame.start(_.clone(this.state));
     }
 });
