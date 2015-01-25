@@ -8,7 +8,7 @@ var config = require('config-heroku');
 mongoose.connect(config.db.connectionString, function(err) {
     if (err) {
         console.error('Error:', err.message);
-        return console.error('**Could not connect to MongoDB. Please ensure mongod is running and restart MEAN app.**');
+        return console.error('**Could not connect to MongoDB. Please ensure mongod is running and restart app.**');
     }
 
     var schemas = require('./server/models');
