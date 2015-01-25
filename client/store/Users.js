@@ -1,7 +1,8 @@
 'use strict';
 
 var fluxxor = require('fluxxor'),
-    protectedStore = require('fluxxor-protected-store');
+    protectedStore = require('fluxxor-protected-store'),
+    domUtils = require('../util/domUtils');
 
 module.exports = fluxxor.createStore(protectedStore({
     public: {
@@ -9,17 +10,23 @@ module.exports = fluxxor.createStore(protectedStore({
             return !!this.loading;
         },
         getErrors: function () {
-            return this.errors;
+            return this.errors || [];
         },
         getUsers: function() {
-            return this.users;
+            return this.users || [];
+        },
+        getLoggedInUser: function() {
+            return this.loggedInUser || null;
         }
     },
 
     initialize: function () {
         this.users = [];
+        this.loggedInUser = null;
         this.loading = false;
         this.errors = [];
+
+        this.loadInitial();
     },
 
     bindActions: function () {
@@ -39,5 +46,9 @@ module.exports = fluxxor.createStore(protectedStore({
         this.errors = [];
         this.users = users;
         this.emit('change');
+    },
+
+    loadInitial: function() {
+        this.loggedInUser = domUtils.getInitialData('loggedInUser');
     }
 }));

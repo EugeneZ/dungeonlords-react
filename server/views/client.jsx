@@ -3,10 +3,14 @@ var React = require('react'),
 
 module.exports = React.createClass({
     render: function(){
+        var initialData = JSON.stringify({
+            loggedInUser: this.props.user
+        });
+
         return (
             <Template title={this.props.title} user={this.props.isAuthenticated ? this.props.user : null}>
                 <div id="client"/>
-                <script src="/assets/scripts/client.js"/>
+                <script src="/assets/scripts/client.js" data-initial-data={initialData}/>
             </Template>
         );
     }
