@@ -3,8 +3,9 @@
 var debug = require('debug')('dungeonlords-react:server');
 var http = require('http');
 var mongoose = require('mongoose');
+var config = require('config-heroku');
 
-mongoose.connect('mongodb://localhost/mean-dev1', function(err) {
+mongoose.connect(config.db.connectionString, function(err) {
     if (err) {
         console.error('Error:', err.message);
         return console.error('**Could not connect to MongoDB. Please ensure mongod is running and restart MEAN app.**');

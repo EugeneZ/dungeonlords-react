@@ -97,9 +97,9 @@ var passportConfig = function(passport, config) {
 
     // Use google strategy
     passport.use(new GoogleStrategy({
-            clientID: config.google.clientID,
-            clientSecret: config.google.clientSecret,
-            callbackURL: config.google.callbackURL
+            clientID: config.auth.google.clientID,
+            clientSecret: config.auth.google.clientSecret,
+            callbackURL: config.auth.google.callbackURL
         },
         function(accessToken, refreshToken, profile, done) {
             User.findOne({

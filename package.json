@@ -11,6 +11,8 @@
   "dependencies": {
     "body-parser": "~1.10.1",
     "browserify": "^8.1.0",
+    "config": "^1.10.0",
+    "config-heroku": "^0.1.1-a",
     "connect-flash": "^0.1.1",
     "cookie-parser": "~1.3.3",
     "debug": "~2.1.1",

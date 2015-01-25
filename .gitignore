@@ -4,5 +4,11 @@
 .idea
 .project
 .settings
+/atlassian-ide-plugin.xml
+/config
+/dungeonlords-react.iml
 /node_modules
 /npm-debug.log
+/public/assets/scripts/client.js
+
+!/config/default.json

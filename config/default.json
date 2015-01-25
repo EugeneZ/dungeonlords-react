@@ -1,0 +1,22 @@
+{
+  "db": {
+    "connectionString": "mongodb://localhost/dungeonlords"
+  },
+  "auth": {
+    "facebook": {
+      "clientID": "DEFAULT_APP_ID",
+      "clientSecret": "APP_SECRET",
+      "callbackURL": "http://localhost:3000/auth/facebook/callback"
+    },
+    "twitter": {
+      "clientID": "DEFAULT_CONSUMER_KEY",
+      "clientSecret": "CONSUMER_SECRET",
+      "callbackURL": "http://localhost:3000/auth/twitter/callback"
+    },
+    "google": {
+      "clientID": "DEFAULT_CLIENT_ID",
+      "clientSecret": "DEFAULT_SECRET",
+      "callbackURL": "http://localhost:3000/auth/google/callback"
+    }
+  }
+}

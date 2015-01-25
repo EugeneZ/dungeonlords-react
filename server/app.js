@@ -7,12 +7,11 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var session = require('express-session');
 var flash = require('connect-flash');
-var mongoose = require('mongoose');
 var less = require('less-middleware');
+var config = require('config-heroku');
 
 var routes = require('./routes/index');
 var api = require('./routes/api');
-var config = require('./config');
 var passportConfig = require('./passport');
 var passportRouter = passportConfig(passport, config);
 
