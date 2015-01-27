@@ -9,7 +9,8 @@ var session = require('express-session');
 var flash = require('connect-flash');
 var less = require('less-middleware');
 var config = require('config-heroku');
-
+var mongoStore = require('connect-mongo')(session);
+var mongoose = require('mongoose');
 var routes = require('./routes/index');
 var api = require('./routes/api');
 var passportConfig = require('./passport');
@@ -28,11 +29,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({
-    secret: 'dungeonlords', //TODO: IMPORTANT!!! CHANGE ME LATER TO A HIDDEN VAR
-    //store: new mongoStore({
-    //    db: db.connection.db,
-    //    collection: config.sessionCollection
-    //}),
+    secret: config.cookie.secret,
+    store: new mongoStore({ mongooseConnection: mongoose.connection }),
     resave: true,
     saveUninitialized: true
 }));

@@ -18,5 +18,8 @@
       "clientSecret": "DEFAULT_SECRET",
       "callbackURL": "http://localhost:3000/auth/google/callback"
     }
+  },
+  "cookie": {
+    "secret": "dungeonlords"
   }
 }

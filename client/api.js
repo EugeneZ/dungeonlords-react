@@ -16,7 +16,10 @@ module.exports = {
     },
 
     Games: {
-        post: function(data){
+        get: function(id) {
+            return client({ path: path + 'Games/' + id }).then(function(response) { return response.entity; });
+        },
+        post: function(data) {
             // expecting data.title, data.player1, data.player2, etc, but need model-like syntax
             var entity = {};
             entity.title = data.title;

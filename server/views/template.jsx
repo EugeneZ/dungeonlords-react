@@ -73,9 +73,9 @@ module.exports = React.createClass({
     renderAuthenticatedNav: function(){
         return (
             <ul className="nav navbar-nav navbar-right">
-                <li><a href="/client#/games/new">New Game</a></li>
+                <li><a href="/client#/new">New Game</a></li>
                 <li><a href="/client#/games">My Games</a></li>
-                <li><a href="/client#/games/search">Search Games</a></li>
+                <li><a href="/client#/search">Search Games</a></li>
                 <li><a href="/auth/logout">Log Out {this.props.user.name}</a></li>
             </ul>
         );

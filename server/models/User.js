@@ -66,7 +66,12 @@ var UserSchema = new Schema({
     resetPasswordExpires: Date,
     facebook: {},
     twitter: {},
-    google: {}
+    google: {},
+
+    games: [{
+        type: Schema.ObjectId,
+        ref: 'Game'
+    }]
 });
 
 /**

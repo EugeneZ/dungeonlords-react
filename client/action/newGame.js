@@ -1,6 +1,7 @@
 'use strict';
 
-var api = require('../api');
+var api = require('../api'),
+    router = require('../router');
 
 module.exports = {
     load: function () {
@@ -26,6 +27,9 @@ module.exports = {
 
         api.Games.post(data).then(function(response) {
             this.dispatch('NEW_GAME_SUCCESS', response);
+            if (response && response._id) {
+                router.transitionTo('/game/' + response._id)
+            }
         }.bind(this), function(err){
             this.dispatch('NEW_GAME_FAILURE', err);
         }.bind(this));
