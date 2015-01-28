@@ -1,8 +1,10 @@
 'use strict';
 
-var mongoose = require('mongoose'),
+var _ = require('lodash'),
+    mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    DLGame = require('../dungeonlords/Game');
+    DLGame = require('../dungeonlords/Game'),
+    Actions = require('../dungeonlords/Actions');
 
 /**
  * GameAction Schema
@@ -63,6 +65,14 @@ GameActionSchema.methods = {
         //var logic = new DLGame(mongoose.model('Game').get(this.game));
         //return logic.legalMove(this);
         return { legal: true };
+    },
+
+    isPrivate: function() {
+        return Actions._privateValues.indexOf(this.action) !== -1;
+    },
+
+    isServer: function() {
+        return Actions._serverValues.indexOf(this.action) !== -1;
     }
 };
 

@@ -42,7 +42,7 @@ Game.prototype.setup = function(){
         GameAction.record({
             game: gid,
             user: uid,
-            action: Actions.ASSIGN_PLAYER_ORDER,
+            action: Actions.ASSIGN_PLAYER_ORDER.value,
             value: rands[i]
         });
 
@@ -50,7 +50,7 @@ Game.prototype.setup = function(){
         GameAction.record({
             game: gid,
             user: uid,
-            action: Actions.GOLD,
+            action: Actions.GOLD.value,
             value: 3
         });
 
@@ -58,7 +58,7 @@ Game.prototype.setup = function(){
         GameAction.record({
             game: gid,
             user: uid,
-            action: Actions.IMPS,
+            action: Actions.IMPS.value,
             value: 3
         });
 
@@ -66,7 +66,7 @@ Game.prototype.setup = function(){
         GameAction.record({
             game: gid,
             user: uid,
-            action: Actions.FOOD,
+            action: Actions.FOOD.value,
             value: 3
         });
 
@@ -74,10 +74,14 @@ Game.prototype.setup = function(){
         GameAction.record({
             game: gid,
             user: uid,
-            action: Actions.PICK_INITIAL_ORDERS,
+            action: Actions.PICK_INITIAL_ORDERS.value,
             value: randomUniqueArray(3, 1, 8)
         });
     }.bind(this));
+};
+
+Game.prototype.move = function(user, move){
+    console.log('MOVE USER: ' + user.name + ' MOVE: ' + JSON.stringify(move));
 };
 
 module.exports = Game;

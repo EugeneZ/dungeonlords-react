@@ -14,17 +14,13 @@ module.exports = React.createClass({
         return {
             game: gameStore.getGame(),
             gameLoading: gameStore.isLoading(),
-            gameErrors: gameStore.getErrors()
+            gameErrors: gameStore.getErrors(),
+            log: gameStore.getLog()
         }
     },
 
     componentWillMount: function() {
         this.getFlux().actions.game.load(this.props.params.id);
-        socket.emit('GetGameActions', { game: this.props.params.id });
-    },
-
-    componentWillReceiveProps: function(newProps) {
-        socket.emit('GetGameActions',  { game: this.props.params.id });
     },
 
     render: function () {
@@ -37,6 +33,8 @@ module.exports = React.createClass({
         var msgClass = null,
             msg = 'Pick a card';
 
+        var log = this.state.log.map(function(log, i){ return <li key={i}>{log}</li>; });
+
         return (
             <div className="row">
                 <div className="col-sm-12">
@@ -47,6 +45,11 @@ module.exports = React.createClass({
                             CARDS
                         </div>
                     </div>
+
+                    <h4>Game Log</h4>
+                    <ol>
+                    {log}
+                    </ol>
                 </div>
             </div>
         );
