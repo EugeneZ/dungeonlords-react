@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     mongoose = require('mongoose'),
+    Game = require('./Game'),
     Actions = require('./Actions');
 
 module.exports = {
@@ -65,10 +66,32 @@ module.exports = {
         }.bind(this));
     },
 
-    move: function(game, user, move){
-        console.log('MOVE USER: ' + user.name + ' MOVE: ' + JSON.stringify(move));
+    move: function(gid, user, move, cb){
+        getGame(gid, function(game){
+
+            // !!!!!
+            // TODO: Check if this is a legal move!
+            // !!!!!
+
+            game.lookupPlayer[user._id].initial.filter(function(order){ return order !== move.value }).forEach(function(order) {
+                mongoose.model('GameAction').record({game: gid, user: user._id, action: Actions.SLOT_UNUSABLE_ORDER.value, value: order }, cb);
+            });
+
+        }, function(err){
+            io.emit('Error', { message: err });
+        });
     }
 };
+
+function getGame(game, cb, fcb){
+    mongoose.model('Game').findById(game, function(err, gameDoc){
+        if (err) return fcb(err);
+        mongoose.model('GameAction').find({ game: game }, function(err, gameActionDocs){
+            if (err) return fcb(err);
+            cb(new Game(gameDoc, gameActionDocs));
+        });
+    });
+}
 
 function randomUniqueArray(length, min, max) {
     var rands = [], tries = 0;

@@ -5,7 +5,7 @@ var passportSocketIo = require('passport.socketio'),
     session = require('express-session'),
     mongoStore = require('connect-mongo')(session),
     _ = require('lodash'),
-    DLGame = require('./dungeonlords/Game');
+    DLServer = require('./dungeonlords/Server');
 
 module.exports = function(io) {
     io.use(passportSocketIo.authorize({
@@ -36,11 +36,7 @@ module.exports = function(io) {
 
                 // filter private values
                 _.forEachRight(actions, function(action, i){
-                    if (action.isServer()){
-                        actions.splice(i, 1);
-                    } else if (action.isPrivate() && !action.user.equals(socket.request.user._id)){
-                        action.value = null;
-                    }
+                    ensureSafeAction(action, socket.request.user);
                 });
 
                 socket.emit('GameActions', actions);
@@ -50,8 +46,10 @@ module.exports = function(io) {
         // Make a move
         socket.on('PostGameAction', function(data){
             ensureAuthorized(socket, data.game);
-            var game = new DLGame(data.game);
-            game.move(socket.request.user, data.move);
+            DLServer.move(data.game, socket.request.user, data.move, function(action){
+                ensureSafeAction(action, socket.request.user);
+                io.to(data.game).emit('GameAction', action);
+            });
         });
 
     });
@@ -60,6 +58,14 @@ module.exports = function(io) {
         if (socket.rooms.indexOf(game) === -1){
             console.log('Unauthorized error for game: ' + game);
             throw new Error('Unauthorized game');
+        }
+    }
+
+    function ensureSafeAction(action, user){
+        if (action.isServer()){
+            actions.splice(i, 1);
+        } else if (action.isPrivate() && !action.user.equals(user._id)){
+            action.value = null;
         }
     }
 };

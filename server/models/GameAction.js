@@ -3,7 +3,6 @@
 var _ = require('lodash'),
     mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    DLGame = require('../dungeonlords/Game'),
     Actions = require('../dungeonlords/Actions');
 
 /**
@@ -79,10 +78,12 @@ GameActionSchema.methods = {
 /**
  * Statics
  */
-GameActionSchema.statics.record = function(action){
-    this.create(action, function(err){
+GameActionSchema.statics.record = function(action, cb){
+    this.create(action, function(err, action){
         if (err) {
             throw new Error(err);
+        } else if (cb) {
+            cb(action);
         }
     })
 };

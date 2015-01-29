@@ -64,6 +64,11 @@ module.exports = fluxxor.createStore(protectedStore({
             this.emit('change');
         }.bind(this));
 
+        io.on('GameAction', function(action){
+            this.pushAction(action);
+            this.emit('change');
+        }.bind(this));
+
         this.loadInitial();
     },
 
@@ -72,7 +77,8 @@ module.exports = fluxxor.createStore(protectedStore({
             NEW_GAME_SUCCESS: this.newGame,
             NEW_GAME_FAILURE: this.newGameFailed,
             GAME_SUCCESS: this.newGame,
-            GAME_FAILURE: this.newGameFailed
+            GAME_FAILURE: this.newGameFailed,
+            MAKE_MOVE: this.makeMove
         };
     },
 
@@ -104,5 +110,17 @@ module.exports = fluxxor.createStore(protectedStore({
         this.actions = actions;
         this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
         this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id);
+    },
+
+    pushAction: function(action) {
+        this.actions.push(action);
+        this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
+        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id);
+    },
+
+    makeMove: function(state) {
+        io.emit('PostGameAction', { game: this.game._id, move: { type: this.move, value: state.active } });
+        this.move = Game.Move.WAITING_FOR_OTHERS;
+        this.emit('change');
     }
 }));

@@ -13,5 +13,9 @@ module.exports = {
                 this.dispatch('GAME_FAILURE', err);
             });
         }
+    },
+
+    makeMove: function(state) {
+        this.dispatch('MAKE_MOVE', state);
     }
 };

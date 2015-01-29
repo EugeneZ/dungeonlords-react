@@ -1,6 +1,7 @@
 'use strict';
 
-var React = require('react'),
+var _ = require('lodash'),
+    React = require('react'),
     FluxMixin = require('fluxxor').FluxMixin(React),
     StoreWatchMixin = require('fluxxor').StoreWatchMixin,
     Game = require('../../server/dungeonlords/Game'),
@@ -24,6 +25,12 @@ module.exports = React.createClass({
             move: gameStore.getMove(),
             me: userStore.getLoggedInUser()
         }
+    },
+
+    getInitialState: function(){
+        return {
+            active: 0
+        };
     },
 
     componentWillMount: function() {
@@ -103,45 +110,48 @@ module.exports = React.createClass({
         var size = '5x';
 
         orders = orders.map(function(order){
-            var text;
+            var text, icon;
             if (order === 1) {
-                order = <Icon icon="cutlery" size={size}/>;
+                icon = <Icon icon="cutlery" size={size}/>;
                 text = 'Get Food';
             } else if (order === 2) {
-                order = <Icon icon="smile-o" size={size}/>;
+                icon = <Icon icon="smile-o" size={size}/>;
                 text = 'Reputation';
             } else if (order === 3) {
-                order = <Icon icon="wrench" size={size}/>;
+                icon = <Icon icon="wrench" size={size}/>;
                 text = 'Dig Tunnels';
             } else if (order === 4) {
-                order = <Icon icon="diamond" size={size}/>;
+                icon = <Icon icon="diamond" size={size}/>;
                 text = 'Mine Gold';
             } else if (order === 5) {
-                order = <Icon icon="child" size={size}/>;
+                icon = <Icon icon="child" size={size}/>;
                 text = 'Recruit Imps';
             } else if (order === 6) {
-                order = <Icon icon="bomb" size={size}/>;
+                icon = <Icon icon="bomb" size={size}/>;
                 text = 'Buy Traps';
             } else if (order === 7) {
-                order = <Icon icon="paw" size={size}/>;
+                icon = <Icon icon="paw" size={size}/>;
                 text = 'Hire Monster';
             } else if (order === 8) {
-                order = <Icon icon="cube" size={size}/>;
+                icon = <Icon icon="cube" size={size}/>;
                 text = 'Build Room';
             } else {
-                order = <Icon icon="question-circle" size={size} spin={true}/>;
+                icon = <Icon icon="question-circle" size={size} spin={true}/>;
             }
 
-            return <div className="order">{order}<span>{text}</span></div>;
-        });
+            return <div className={'order' + (this.state.active === order ? ' active' : '')} onClick={this.onClickOrder.bind(this, order)}>
+                {icon}
+                <span>{text}</span>
+            </div>;
+        }.bind(this));
 
         return (
             <div className="selection">
                 <div className="orders">
                     {orders}
                 </div>
-                <button className="btn btn-danger">Undo</button>
-                <button className="btn btn-success">Okay</button>
+                <button className="btn btn-danger" onClick={this.onClickUndo}>Undo</button>
+                <button className="btn btn-success" onClick={this.onClickOkay} disabled={this.state.active === 0}>Okay</button>
             </div>
         );
     },
@@ -171,5 +181,20 @@ module.exports = React.createClass({
         }
 
         return { className: className, message: message, selection: selection };
+    },
+
+    onClickOrder: function(order, e) {
+        e.preventDefault();
+        this.setState({ active: order });
+    },
+
+    onClickUndo: function(e) {
+        e.preventDefault();
+        this.setState(this.getInitialState());
+    },
+
+    onClickOkay: function(e) {
+        e.preventDefault();
+        this.getFlux().actions.game.makeMove(_.cloneDeep(this.state));
     }
 });
