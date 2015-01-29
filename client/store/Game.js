@@ -4,7 +4,8 @@ var fluxxor = require('fluxxor'),
     protectedStore = require('fluxxor-protected-store'),
     _ = require('lodash'),
     domUtils = require('../util/domUtils'),
-    io = require('../socket');
+    io = require('../socket'),
+    Game = require('../../server/dungeonlords/Game'); // Loading a server component! Re-using logic core for server/clientside;
 
 module.exports = fluxxor.createStore(protectedStore({
     public: {
@@ -16,6 +17,9 @@ module.exports = fluxxor.createStore(protectedStore({
         },
         getGame: function() {
             return this.game || null;
+        },
+        getMove: function() {
+            return this.move;
         },
         getLog: function() {
             return this.actions.map(function(action){
@@ -38,6 +42,9 @@ module.exports = fluxxor.createStore(protectedStore({
                         return 'Mysterious log message.';
                 }
             });
+        },
+        getLogic: function(){
+            return this.logic || null;
         }
     },
 
@@ -46,6 +53,7 @@ module.exports = fluxxor.createStore(protectedStore({
         this.actions = [];
         this.loading = false;
         this.errors = [];
+        this.move = Game.Move.WAITING_FOR_SERVER;
 
         io.on('JoinGameSuccess', function(){
             io.emit('GetGameActions', { game: this.game._id });
@@ -94,5 +102,7 @@ module.exports = fluxxor.createStore(protectedStore({
 
     loadActions: function(actions) {
         this.actions = actions;
+        this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
+        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id);
     }
 }));

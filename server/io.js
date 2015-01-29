@@ -38,7 +38,7 @@ module.exports = function(io) {
                 _.forEachRight(actions, function(action, i){
                     if (action.isServer()){
                         actions.splice(i, 1);
-                    } else if (action.isPrivate() && socket.request.user._id !== action.user){
+                    } else if (action.isPrivate() && !action.user.equals(socket.request.user._id)){
                         action.value = null;
                     }
                 });

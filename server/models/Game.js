@@ -2,7 +2,7 @@
 
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    DLGame = require('../dungeonlords/Game'),
+    GameServer = require('../dungeonlords/Server'),
     debug = require('debug')('db');
 
 /**
@@ -62,8 +62,7 @@ GameSchema.pre('save', function(next) {
  * Post-save hook
  */
 GameSchema.post('save', function(game) {
-    var logic = new DLGame(game);
-    logic.setup();
+    GameServer.newGameSetup(game);
 });
 
 /**
