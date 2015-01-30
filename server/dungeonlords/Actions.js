@@ -7,7 +7,7 @@ var Actions = {
     GOLD: { value: 3 }, // Value is number of gold gained (negative for gold lost)
     IMPS: { value: 4 }, // Value is number of imps gained (negative for imps lost)
     FOOD: { value: 5 }, // Value is number of food gained (negative for food lost)
-    PLACEHOLDER: { value: 6},
+    ORDERS_PICKED: { value: 6, private: true}, // Value depends on the previous action, determines the hidden things we need to do.
     REP: { value: 7 }, // Value is the amount of evil gained (negative for evil lost)
     ROOM: { value: 8 }, // Value is in the form: { row: 1-4, column: 1-5, id: Number} where the id is the type of room/tunnel.
     TRAP: { value: 9, private: true }, // Value is the id of the trap looked at or gained, negative for lost trap

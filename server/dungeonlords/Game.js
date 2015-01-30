@@ -82,7 +82,9 @@ Game.prototype.initialize = function(){
             unusableOrders: [],
 
             // The orders you picked but couldn't or didn't want to use.
-            didnotuse: []
+            didnotuse: [],
+
+            ordersPicked: null
         };
     }.bind(this));
 
@@ -93,26 +95,41 @@ Game.prototype.run = function(){
     for (; this.frame < this.actions.length; this.frame++) {
         var a = this.actions[this.frame];
         this._ActionHandlers[Actions._keyOf[a.action]].call(this, a.user, a.value);
+        this.finish();
     }
 };
 
 Game.prototype.nextMove = function(uid){
     if (this.phaseTrack.year === 0) {
-        if (!this.lookupPlayer[uid].initial || !this.lookupPlayer[uid].initial.length) {
-            return Game.Move.WAITING_FOR_SERVER;
+        if (this.lookupPlayer[uid].ordersPicked) {
+            return { move: Game.Move.WAITING_FOR_OTHERS };
         } else {
-            return Game.Move.SELECT_INITIAL_ORDERS;
+            return {
+                move: Game.Move.SELECT_INITIAL_ORDERS,
+                value: function(){
+                    return this.lookupPlayer[user._id].initial.filter(function(order){ return order !== this.state.active });
+                }.bind(this),
+                action: Actions.ORDERS_PICKED,
+                validate: function(value){
+                    value.forEach(function(order){
+                        if (this.lookupPlayer[useer._id].initial.indexOf(order) === -1) {
+                            throw new Error('Illegal move');
+                        }
+                    }.bind(this));
+                    return value;
+                }.bind(this)
+            };
         }
     } else if (this.phaseTrack.phase === Phases.ORDERS) {
         if (_.every(this.players, function(player){ return player.orders.length; })) {
             //
         } else {
-            return Game.Move.SELECT_ORDERS;
+            return { move: Game.Move.SELECT_ORDERS };
         }
     } else if (this.phaseTrack.phase === Phases) {
 
     } else {
-        return Game.Move.WAITING_FOR_SERVER;
+        return { move: Game.Move.WAITING_FOR_SERVER };
     }
 };
 
@@ -160,6 +177,18 @@ Game.prototype.orderResolver = function(){
             }
         }.bind(this));
     }.bind(this));
+};
+
+Game.prototype.finish = function(){
+    var donePickingOrders = true;
+    this.players.forEach(function(player){
+        if (!player.ordersPicked) {
+            donePickingOrders = false;
+        }
+    });
+    if (donePickingOrders) {
+
+    }
 };
 
 Game.prototype._ActionHandlers = {
@@ -220,10 +249,14 @@ Game.prototype._ActionHandlers = {
         this.lookupPlayer[uid].initial = v;
     },
     SLOT_UNUSABLE_ORDER: function(uid, v){
-        this.lookupPlayer[uid].unusableOrders.concat(v);
+        this.lookupPlayer[uid].unusableOrders.push(v);
     },
     ASSIGN_DUMMY_MARKER: function(uid, v){
         this.dummyOrders = v;
+    },
+
+    ORDERS_PICKED: function(uid, v){
+        this.lookupPlayer[uid].ordersPicked = v;
     }
 };
 

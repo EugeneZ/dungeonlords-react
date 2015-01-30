@@ -109,17 +109,22 @@ module.exports = fluxxor.createStore(protectedStore({
     loadActions: function(actions) {
         this.actions = actions;
         this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
-        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id);
+        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id).move;
+        console.log(this.logic);
     },
 
     pushAction: function(action) {
         this.actions.push(action);
         this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
-        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id);
+        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id).move;
     },
 
     makeMove: function(state) {
-        io.emit('PostGameAction', { game: this.game._id, move: { type: this.move, value: state.active } });
+        io.emit('PostGameAction', { game: this.game._id, move: {
+            type: this.move,
+            value: this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id).value()
+        } });
+
         this.move = Game.Move.WAITING_FOR_OTHERS;
         this.emit('change');
     }

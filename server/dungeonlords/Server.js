@@ -69,13 +69,14 @@ module.exports = {
     move: function(gid, user, move, cb){
         getGame(gid, function(game){
 
-            // !!!!!
-            // TODO: Check if this is a legal move!
-            // !!!!!
+            var nextMoveData = game.nextMove(user._id);
 
-            game.lookupPlayer[user._id].initial.filter(function(order){ return order !== move.value }).forEach(function(order) {
-                mongoose.model('GameAction').record({game: gid, user: user._id, action: Actions.SLOT_UNUSABLE_ORDER.value, value: order }, cb);
-            });
+            mongoose.model('GameAction').record({
+                game: gid,
+                user: user._id,
+                action: nextMoveData.value,
+                value: nextMoveData.validate(move.value)
+            }, cb);
 
         }, function(err){
             io.emit('Error', { message: err });
