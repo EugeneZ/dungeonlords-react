@@ -23,7 +23,7 @@ module.exports = React.createClass({
         var games = this.state.me.games.map(function(game){
             return (
                 <tr>
-                    <td><Link to={'/games/' + game}>{game}</Link></td>
+                    <td><Link to={'/game/' + game}>{game}</Link></td>
                 </tr>
             );
         });
