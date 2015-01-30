@@ -5,7 +5,7 @@ var fluxxor = require('fluxxor'),
     _ = require('lodash'),
     domUtils = require('../util/domUtils'),
     io = require('../socket'),
-    Game = require('../../server/dungeonlords/Game'); // Loading a server component! Re-using logic core for server/clientside;
+    Game = require('../../game/dungeonlords/Game'); // Loading a server component! Re-using logic core for server/clientside;
 
 module.exports = fluxxor.createStore(protectedStore({
     public: {

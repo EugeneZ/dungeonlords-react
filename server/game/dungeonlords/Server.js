@@ -1,7 +1,7 @@
 var _ = require('lodash'),
     mongoose = require('mongoose'),
-    Game = require('./Game'),
-    Actions = require('./Actions');
+    Game = require('./../../../game/dungeonlords/Game'),
+    Actions = require('./../../../game/dungeonlords/Actions');
 
 module.exports = {
     newGameSetup: function(game) {

@@ -4,7 +4,7 @@ var _ = require('lodash'),
     React = require('react'),
     FluxMixin = require('fluxxor').FluxMixin(React),
     StoreWatchMixin = require('fluxxor').StoreWatchMixin,
-    Game = require('../../server/dungeonlords/Game'),
+    Game = require('../../game/dungeonlords/Game'),
     Icon = require('./Icon');
 
 require('../less/dungeonlords.less');

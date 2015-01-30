@@ -2,7 +2,7 @@
 
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    GameServer = require('../dungeonlords/Server'),
+    GameServer = require('../game/dungeonlords/Server'),
     debug = require('debug')('db');
 
 /**

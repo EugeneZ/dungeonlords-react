@@ -3,7 +3,7 @@
 var _ = require('lodash'),
     mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    Actions = require('../dungeonlords/Actions');
+    Actions = require('../../game/dungeonlords/Actions');
 
 /**
  * GameAction Schema

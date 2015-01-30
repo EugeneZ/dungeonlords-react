@@ -5,7 +5,7 @@ var passportSocketIo = require('passport.socketio'),
     session = require('express-session'),
     mongoStore = require('connect-mongo')(session),
     _ = require('lodash'),
-    DLServer = require('./dungeonlords/Server');
+    DLServer = require('./game/dungeonlords/Server');
 
 module.exports = function(io) {
     io.use(passportSocketIo.authorize({
