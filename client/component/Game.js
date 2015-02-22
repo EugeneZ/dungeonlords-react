@@ -23,14 +23,9 @@ module.exports = React.createClass({
             log: gameStore.getLog(),
             logic: gameStore.getLogic(),
             move: gameStore.getMove(),
-            me: userStore.getLoggedInUser()
+            me: userStore.getLoggedInUser(),
+            order: gameStore.getOrder()
         }
-    },
-
-    getInitialState: function(){
-        return {
-            active: 0
-        };
     },
 
     componentWillMount: function() {
@@ -139,7 +134,7 @@ module.exports = React.createClass({
                 icon = <Icon icon="question-circle" size={size} spin={true}/>;
             }
 
-            return <div className={'order' + (this.state.active === order ? ' active' : '')} onClick={this.onClickOrder.bind(this, order)}>
+            return <div className={'order' + (this.state.order === order ? ' active' : '')} onClick={this.onClickOrder.bind(this, order)}>
                 {icon}
                 <span>{text}</span>
             </div>;
@@ -151,7 +146,7 @@ module.exports = React.createClass({
                     {orders}
                 </div>
                 <button className="btn btn-danger" onClick={this.onClickUndo}>Undo</button>
-                <button className="btn btn-success" onClick={this.onClickOkay} disabled={this.state.active === 0}>Okay</button>
+                <button className="btn btn-success" onClick={this.onClickOkay} disabled={!this.state.order}>Okay</button>
             </div>
         );
     },
@@ -185,12 +180,12 @@ module.exports = React.createClass({
 
     onClickOrder: function(order, e) {
         e.preventDefault();
-        this.setState({ active: order });
+        this.getFlux().actions.game.orderClicked(order);
     },
 
     onClickUndo: function(e) {
         e.preventDefault();
-        this.setState(this.getInitialState());
+        this.getFlux().actions.game.undoClicked();
     },
 
     onClickOkay: function(e) {

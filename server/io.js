@@ -21,10 +21,13 @@ module.exports = function(io) {
         socket.on('JoinGame', function(data){
             if (socket.request.user.games.indexOf(data.game) === -1){
                 console.log('Unauthorized join room: ' + data.game);
-                return socket.emit('GameActions', new Error('Unauthorized game requested'));
+                return socket.emit('Error', new Error('Unauthorized game requested'));
             } else {
                 socket.join(data.game);
                 socket.emit('JoinGameSuccess', { status: true });
+                DLServer.joinGameSetup(data.game, socket.request.user._id, function(err){
+                    socket.emit('Error', err);
+                });
             }
         });
 
@@ -32,23 +35,24 @@ module.exports = function(io) {
         socket.on('GetGameActions', function (data) {
             ensureAuthorized(socket, data.game);
 
-            mongoose.model('GameAction').find({ game: data.game }, function(err, actions){
-
-                // filter private values
-                _.forEachRight(actions, function(action, i){
-                    ensureSafeAction(action, socket.request.user);
-                });
-
+            DLServer.getMoves(data.game, function(actions){
                 socket.emit('GameActions', actions);
+            }, function(err){
+                socket.emit('Error', err);
             });
         });
 
         // Make a move
         socket.on('PostGameAction', function(data){
             ensureAuthorized(socket, data.game);
-            DLServer.move(data.game, socket.request.user, data.move, function(action){
-                ensureSafeAction(action, socket.request.user);
-                io.to(data.game).emit('GameAction', action);
+            DLServer.move(data.game, socket.request.user._id, data.value, function(actionOrActions){
+                if ('length' in actionOrActions) {
+                    io.to(data.game).emit('GameActions', actionOrActions);
+                } else {
+                    io.to(data.game).emit('GameAction', actionOrActions);
+                }
+            }, function(err){
+                socket.emit('Error', err);
             });
         });
 
@@ -58,14 +62,6 @@ module.exports = function(io) {
         if (socket.rooms.indexOf(game) === -1){
             console.log('Unauthorized error for game: ' + game);
             throw new Error('Unauthorized game');
-        }
-    }
-
-    function ensureSafeAction(action, user){
-        if (action.isServer()){
-            actions.splice(i, 1);
-        } else if (action.isPrivate() && !action.user.equals(user._id)){
-            action.value = null;
         }
     }
 };

@@ -1,16 +1,193 @@
-var _ = require('lodash'),
-    Actions = require('./Actions'),
-    Phases = require('./Phases'),
-    Rooms = require('./Rooms');
+var _ = require('lodash');
 
-var Game = function(gameDoc, actionDocs){
+var Game = function(gameDoc, actionDocs, uid){
     this.doc = gameDoc;
     this.actions = actionDocs.sort(function(a, b){ return Date.parse(a.created) - Date.parse(b.created); });
     this.frame = 0;
+    this.uid = uid || 'Server'; // pass the current player's uid. If nothing is passed, means it's the server
 
     this.initialize();
-    this.run();
 };
+
+Game.Phase = {
+    NEW_ROUND: 1,
+    ORDERS: 2,
+    PRODUCTION: 3,
+    EVENT: 4,
+    ADVENTURERS: 5,
+    END_OF_ROUND: 6,
+    COMBAT_ROUND_ONE: 7,
+    COMBAT_ROUND_TWO: 8,
+    COMBAT_ROUND_THREE: 9,
+    COMBAT_ROUND_FOUR: 10
+};
+
+Game.Season = {
+    WINTER: 1,
+    SPRING: 2,
+    SUMMER: 3,
+    FALL  : 4,
+    COMBAT: 5
+};
+
+Game.Room = {
+    TUNNEL: 1,
+    CONQUERED_TUNNEL: 2,
+    CONQUERED_ROOM: 3,
+    CHICKEN_COOP: 4,
+    MUSHROOM_BED: 5,
+    SOUVENIR_SHOP: 6,
+    MINT: 7,
+    WORKSHOP: 8,
+    TOOL_SHED: 9,
+    PRINTING_PRESS: 10,
+    MAGIC_ROOM: 11,
+    TRAINING_ROOM: 12,
+    DARK_ROOM: 13,
+    LABYRINTH: 14,
+    ANTIMAGIC_ROOM: 15,
+    CAFETERIA: 16,
+    CHAPEL: 17,
+    PANDEMONIUM: 18,
+    HALL_OF_FAME: 19
+};
+
+Game.YearOneRooms = [
+    Game.Room.CHICKEN_COOP,
+    Game.Room.MUSHROOM_BED,
+    Game.Room.SOUVENIR_SHOP,
+    Game.Room.MINT,
+    Game.Room.WORKSHOP,
+    Game.Room.TOOL_SHED,
+    Game.Room.PRINTING_PRESS,
+    Game.Room.MAGIC_ROOM
+];
+
+Game.YearTwoRooms = [
+    Game.Room.TRAINING_ROOM,
+    Game.Room.DARK_ROOM,
+    Game.Room.LABYRINTH,
+    Game.Room.ANTIMAGIC_ROOM,
+    Game.Room.CAFETERIA,
+    Game.Room.CHAPEL,
+    Game.Room.PANDEMONIUM,
+    Game.Room.HALL_OF_FAME
+];
+
+Game.Monster = {
+    GOBLIN: 1,
+    SLIME: 2,
+    GHOST: 3,
+    TROLL: 4,
+    WITCH: 5,
+    VAMPIRE: 6,
+    GOLEM: 7,
+    DRAGON: 8,
+    DEMON: 9
+};
+
+Game.YearOneMonsters = [
+    Game.Monster.GOBLIN,
+    Game.Monster.GOBLIN,
+    Game.Monster.SLIME,
+    Game.Monster.SLIME,
+    Game.Monster.GHOST,
+    Game.Monster.GHOST,
+    Game.Monster.TROLL,
+    Game.Monster.TROLL,
+    Game.Monster.WITCH,
+    Game.Monster.WITCH,
+    Game.Monster.VAMPIRE,
+    Game.Monster.VAMPIRE
+];
+
+Game.YearTwoMonsters = [
+    Game.Monster.GOBLIN,
+    Game.Monster.SLIME,
+    Game.Monster.GHOST,
+    Game.Monster.TROLL,
+    Game.Monster.WITCH,
+    Game.Monster.VAMPIRE,
+    Game.Monster.GOLEM,
+    Game.Monster.GOLEM,
+    Game.Monster.DRAGON,
+    Game.Monster.DRAGON,
+    Game.Monster.DEMON,
+    Game.Monster.DEMON
+];
+
+Game.Adventurer = {
+    FIGHTER1: 1,
+    FIGHTER2: 2,
+    FIGHTER3: 3,
+    FIGHTER4: 4,
+    THIEF1: 5,
+    THIEF2: 6,
+    THIEF3: 7,
+    THIEF4: 8,
+    CLERIC1: 9,
+    CLERIC2: 10,
+    CLERIC3: 11,
+    CLERIC4: 12,
+    WIZARD1: 13,
+    WIZARD2: 14,
+    WIZARD3: 15,
+    WIZARD4: 16,
+    FIGHTER5: 17,
+    FIGHTER6: 18,
+    FIGHTER7: 19,
+    FIGHTER8: 20,
+    THIEF5: 21,
+    THIEF6: 22,
+    THIEF7: 23,
+    THIEF8: 24,
+    CLERIC5: 25,
+    CLERIC6: 26,
+    CLERIC7: 27,
+    CLERIC8: 28,
+    WIZARD5: 29,
+    WIZARD6: 30,
+    WIZARD7: 31,
+    WIZARD8: 32
+};
+
+Game.YearOneAdventurers = [
+    Game.Adventurer.FIGHTER1,
+    Game.Adventurer.FIGHTER2,
+    Game.Adventurer.FIGHTER3,
+    Game.Adventurer.FIGHTER4,
+    Game.Adventurer.THIEF1,
+    Game.Adventurer.THIEF2,
+    Game.Adventurer.THIEF3,
+    Game.Adventurer.THIEF4,
+    Game.Adventurer.CLERIC1,
+    Game.Adventurer.CLERIC2,
+    Game.Adventurer.CLERIC3,
+    Game.Adventurer.CLERIC4,
+    Game.Adventurer.WIZARD1,
+    Game.Adventurer.WIZARD2,
+    Game.Adventurer.WIZARD3,
+    Game.Adventurer.WIZARD4
+];
+
+Game.YearTwoAdventurers = [
+    Game.Adventurer.FIGHTER5,
+    Game.Adventurer.FIGHTER6,
+    Game.Adventurer.FIGHTER7,
+    Game.Adventurer.FIGHTER8,
+    Game.Adventurer.THIEF5,
+    Game.Adventurer.THIEF6,
+    Game.Adventurer.THIEF7,
+    Game.Adventurer.THIEF8,
+    Game.Adventurer.CLERIC5,
+    Game.Adventurer.CLERIC6,
+    Game.Adventurer.CLERIC7,
+    Game.Adventurer.CLERIC8,
+    Game.Adventurer.WIZARD5,
+    Game.Adventurer.WIZARD6,
+    Game.Adventurer.WIZARD7,
+    Game.Adventurer.WIZARD8
+];
 
 Game.Move = {
     WAITING_FOR_SERVER: 1,
@@ -28,108 +205,200 @@ Game.Move = {
     SELECT_PAYDAY: 13,          // For each monster you can afford to pay, do you want to? Lose monster and gain evil if not.
     SELECT_TAXES: 14,           // How much tax do you want to pay? (Dead letter per unpaid)
     SELECT_COMBAT_PLANNING: 15, // Planning phase of combat
-    SELECT_COMBAT: 16           // Decisions made after revealing the combat card for that round (your traps/monster choices from planning are committed now)
+    SELECT_COMBAT: 16,          // Decisions made after revealing the combat card for that round (your traps/monster choices from planning are committed now)
+    EXECUTE_ORDERS: 17,
+    SELECT_ADVENTURER: 18,
+    ASSIGN_PLAYER_ORDER: 19,
+    ASSIGN_INITIAL_ORDERS: 20
 };
 
+Game.Move._keyOf = _.invert(Game.Move);
+
 Game.prototype.initialize = function(){
+    this.logArr = [];
 
     // Boards
     this.phaseTrack = { season: 0, phase: 0, year: 0};
     this.monsters = [];
+    this.discardedMonsters = [];
     this.rooms = [];
+    this.discardedRooms = [];
+    this.adventurers = [];
     this.dummyOrders = [];
+    this.events = [null,null,null];
+    this.serverDone = null;
+    this.doneRandomizingPlayerOrder = false;
+    this.doneAssigningFirstCards = false;
 
     // Player boards
-    this.players = _.compact(this.doc.players).map(function(player, i){
-        return {
-            id: player._id,
-
-            gold: 0,
-            imps: 0,
-            food: 0,
-
-            // Turn order. Higher is better!
-            order: 0,
-
-            // Evilmeter. Higher means more evil.
-            rep: 0,
-
-            // A 2d array indicating the contents of your dungeon layout. Access as [column][row]
-            map: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
-
-            // The collection of your dungeon, used for points/trophies at the end
-            dungeon: [],
-
-            // The line outside of your door. Index 0 represents the space closest to the door.
-            adventurers: [],
-
-            // PRIVATE CONTENTS, but the length is public. Private traps are added as 0's.
-            traps: [],
-
-            // How many -3 point marks you have on your account. These are the red cubes in the upper right of the board
-            deadLetters: [],
-
-            // Ids of monsters you have
-            monsters: [],
-
-            // Starting hand. You must pick one to keep and two to put in unusable orders
-            initial: null,
-
-            // SECRET. The orders you have selected. Secret until they are revealed
-            orders: [0,0,0],
-
-            // The orders you cannot choose. Public knowledge,
-            unusableOrders: [],
-
-            // The orders you picked but couldn't or didn't want to use.
-            didnotuse: [],
-
-            ordersPicked: null
-        };
+    this.players = _.compact(this.doc.players).map(function(player, i) {
+        return new Player(player);
     }.bind(this));
 
+    // Easy lookup of players by id
     this.lookupPlayer = _.indexBy(this.players, 'id');
+
+    // Easy iteration over boards
+    this.eachPlayer   = this.players.forEach.bind(this.players);
+
+    this.log('A game of Dungeon Lords has begun. ' + this.players.length + ' players have joined. They each receive 3 gold, food, imps, and tunnels. Good luck!');
+    this.run();
 };
 
+// Executes all the pending server actions
 Game.prototype.run = function(){
     for (; this.frame < this.actions.length; this.frame++) {
-        var a = this.actions[this.frame];
-        this._ActionHandlers[Actions._keyOf[a.action]].call(this, a.user, a.value);
-        this.finish();
+        this.runMove(this.actions[this.frame]);
     }
+    this._next();
 };
 
-Game.prototype.nextMove = function(uid){
+// Figures out what everyone has to do next
+Game.prototype._next = function(){
+    var everyPlayerIsDone;
+
+    // By default, everyone is waiting. The rest of the code determines if this is incorrect
+    var next = {
+        forPlayer: { Server: Game.Move.WAITING_FOR_OTHERS }
+    };
+    this.eachPlayer(function(player){
+        next.forPlayer[player.id] = Game.Move.WAITING_FOR_OTHERS;
+    });
+
     if (this.phaseTrack.year === 0) {
-        if (this.lookupPlayer[uid].ordersPicked) {
-            return { move: Game.Move.WAITING_FOR_OTHERS };
-        } else {
-            return {
-                move: Game.Move.SELECT_INITIAL_ORDERS,
-                value: function(){
-                    return this.lookupPlayer[user._id].initial.filter(function(order){ return order !== this.state.active });
-                }.bind(this),
-                action: Actions.ORDERS_PICKED,
-                validate: function(value){
-                    value.forEach(function(order){
-                        if (this.lookupPlayer[useer._id].initial.indexOf(order) === -1) {
-                            throw new Error('Illegal move');
-                        }
-                    }.bind(this));
-                    return value;
-                }.bind(this)
-            };
+
+        if (this.nextForGameStart(next)) {
+            return;
         }
-    } else if (this.phaseTrack.phase === Phases.ORDERS) {
-        if (_.every(this.players, function(player){ return player.orders.length; })) {
-            //
+
+    } else if (this.phaseTrack.phase === Game.Phase.NEW_ROUND) {
+
+        if (this.monsters.length < 3) {
+            next.forPlayer.Server = Game.Move.SELECT_MONSTER;
+        } else if (this.rooms.length < 2) {
+            next.forPlayer.Server = Game.Move.SELECT_ROOM;
+        } else if (this.adventurers < this._numberOfAdventurers()) {
+            next.forPlayer.Server = Game.Move.SELECT_ADVENTURER;
+        //} else if (this.phaseTrack.season !== Game.Season.FALL && this.events[this.phaseTrack.season-1]) {
+            // TODO: Flip event tile, show card if neccessary
         } else {
-            return { move: Game.Move.SELECT_ORDERS };
+            return this._nextPhase();
         }
-    } else if (this.phaseTrack.phase === Phases) {
+
+    } else if (this.phaseTrack.phase === Game.Phase.ORDERS) {
+
+        everyPlayerIsDone = _.every(this.players, function(player){ return player.orders.length === 3; });
+
+        if (everyPlayerIsDone && this.serverDone) {
+            return this._nextPhase();
+        } else if (everyPlayerIsDone) {
+            next.forPlayer.Server = Game.Move.EXECUTE_ORDERS;
+        } else {
+            this.eachPlayer(function(player) {
+                if (player.orders.length !== 3) {
+                    next.forPlayer[player.id] = Game.Move.SELECT_ORDERS;
+                }
+            });
+        }
+
+    } else if (this.phaseTrack.phase === Game.Phase.PRODUCTION) {
 
     } else {
-        return { move: Game.Move.WAITING_FOR_SERVER };
+        throw new Error('Something went wrong');
+    }
+
+    // If the server is supposed to do something, let the players know
+    if (next.forPlayer.Server !== Game.Move.WAITING_FOR_OTHERS){
+        this.eachPlayer(function(player){
+            next.forPlayer[player.id] = Game.Move.WAITING_FOR_SERVER;
+        });
+    }
+    this.next = next;
+};
+
+/**
+ * Returns true if it wants the calling function to return early.
+ */
+Game.prototype.nextForGameStart = function(next){
+    if (!this.doneRandomizingPlayerOrder) {
+        next.forPlayer.Server = Game.Move.ASSIGN_PLAYER_ORDER;
+        return;
+    } else if (!this.doneAssigningFirstCards) {
+        next.forPlayer.Server = Game.Move.ASSIGN_INITIAL_ORDERS;
+        return;
+    }
+
+    var everyPlayerIsDone = _.every(this.players, function (player) {
+        return player.unusableOrders.length === 2;
+    });
+
+    if (everyPlayerIsDone && this.serverDone) {
+        return this._nextPhase();
+    } else if (everyPlayerIsDone) {
+        next.forPlayer.Server = Game.Move.EXECUTE_ORDERS;
+    } else {
+        this.eachPlayer(function(player) {
+            if (!player.unusableOrders.length) {
+                next.forPlayer[player.id] = Game.Move.SELECT_INITIAL_ORDERS;
+            }
+        });
+    }
+    //if (this.lookupPlayer[uid].ordersPicked) {
+    //    return { move: Game.Move.WAITING_FOR_OTHERS };
+    //} else {
+    //    return {
+    //        move: Game.Move.SELECT_INITIAL_ORDERS,
+    //        value: function(){
+    //            return this.lookupPlayer[user._id].initial.filter(function(order){ return order !== this.state.active });
+    //        }.bind(this),
+    //        action: Actions.ORDERS_PICKED,
+    //        validate: function(value){
+    //            value.forEach(function(order){
+    //                if (this.lookupPlayer[useer._id].initial.indexOf(order) === -1) {
+    //                    throw new Error('Illegal move');
+    //                }
+    //            }.bind(this));
+    //            return value;
+    //        }.bind(this)
+    //    };
+    //}
+};
+
+Game.prototype._nextPhase = function() {
+    if (this.phaseTrack.year === 0 || this.phaseTrack.phase >= Game.Phase.COMBAT_ROUND_FOUR) {
+        this.phaseTrack.year += 1;
+        this.phaseTrack.phase = Game.Phase.NEW_ROUND;
+        this.phaseTrack.season = Game.Season.WINTER;
+    } else if (this.phaseTrack.phase === Game.Phase.END_OF_ROUND) {
+        this.phaseTrack.season += 1;
+        this.phaseTrack.phase += 1;
+    } else {
+        this.phaseTrack.phase += 1;
+    }
+
+    if (this.year > 2) {
+        this.log('The game has ended!');
+    } else {
+        var phaseWord = _.startCase(_.findKey(Game.Phase, this.phaseTrack.phase));
+        var seasonWord = _.startCase(_.findKey(Game.Season, this.phaseTrack.season));
+        var yearWord = this.phaseTrack.year === 1 ? 'One' : 'Two';
+        this.log('It is time for the ' + phaseWord + ' phase during ' + seasonWord + ' in Year ' + yearWord + '.');
+    }
+
+    this._next();
+    return true; // This explicit true short circuits logic
+};
+
+Game.prototype._numberOfAdventurers = function() {
+    switch (this.phaseTrack.season) {
+        case Game.Season.WINTER:
+            return this.players.length === 4 ? 4 : 3;
+        case Game.Season.SPRING:
+            return this.players.length === 4 ? 8 : 6;
+        case Game.Season.SUMMER:
+            return this.players.length === 4 ? 8 : 6;
+        default:
+            return 0;
     }
 };
 
@@ -179,85 +448,260 @@ Game.prototype.orderResolver = function(){
     }.bind(this));
 };
 
-Game.prototype.finish = function(){
-    var donePickingOrders = true;
-    this.players.forEach(function(player){
-        if (!player.ordersPicked) {
-            donePickingOrders = false;
-        }
+Game.prototype.log = function(msg){
+    this.logArr.push({
+        message: msg
     });
-    if (donePickingOrders) {
+};
 
+Game.prototype.getLog = function(){
+    return this.logArr;
+};
+
+/**
+ * Checks whether the value is a legal move for the current player.
+ * @param value
+ * @returns {*}
+ */
+Game.prototype.isLegal = function(value){
+    var move = this.next.forPlayer[this.uid];
+    return this._MoveHandlers[Game.Move._keyOf[move]].isLegal.call(this, value);
+};
+
+/**
+ * Gets the value that should be recorded in the db for the current player.
+ * @returns {*}
+ */
+Game.prototype.getValueForMove = function(){
+    var move = this.next.forPlayer[this.uid];
+    return this._MoveHandlers[Game.Move._keyOf[move]].getValue.call(this);
+};
+
+/**
+ * Sets the value from either the server function for the server or the state representation for the active player.
+ * @param value
+ */
+Game.prototype.setValueForMove = function(value){
+    var move = this.next.forPlayer[this.uid];
+    this._MoveHandlers[Game.Move._keyOf[move]].setValue.call(this, value);
+};
+
+/**
+ * Returns the value that should be used for the server's move
+ * @returns {*}
+ */
+Game.prototype.getServerMoveValue = function(){
+    var move = this.next.forPlayer.Server;
+    return this._MoveHandlers[Game.Move._keyOf[move]].server.call(this);
+};
+
+/**
+ * Runs the logic for a recorded move
+ * @param action
+ */
+Game.prototype.runMove = function(action){
+    this._MoveHandlers[Game.Move._keyOf[action.action]].run.call(this, action);
+};
+
+/**
+ * Determines whether players other than the one whose action it is can see the value
+ * @param action
+ * @returns {Function|boolean}
+ */
+Game.prototype.isHidden = function(action){
+    return this._MoveHandlers[Game.Move._keyOf[action.action]].isHidden || false;
+};
+
+Game.prototype._MoveHandlers = {
+
+    ASSIGN_PLAYER_ORDER: {
+        server: function() {
+            return this.players.map(function(player){
+                return { uid: player.id, value: _.random(1, 100000) };
+            });
+        },
+        run: function(action) {
+            action.value.forEach(function(sub){
+                this.lookupPlayer[sub.uid].order = sub.value;
+            }.bind(this));
+            this.doneRandomizingPlayerOrder = true;
+
+            var orderWords = _(this.lookupPlayer)
+                .map(function(p){ return { name: p.name, order: p.order }; })
+                .sort(function(a,b){ return a.order > b.order })
+                .map(function(p){ return p.name})
+                .value()
+                .join(', ');
+
+            this.log('Player order has been randomly assigned like this: ' + orderWords);
+        }
+    },
+
+    ASSIGN_INITIAL_ORDERS: {
+        isHidden: true,
+        server: function() {
+            return this.players.map(function(player){
+                return { uid: player.id, value: randomUniqueArray(3, 1, 8) };
+            }.bind(this));
+        },
+        run: function(action) {
+            action.value.forEach(function(sub){
+                this.lookupPlayer[sub.uid].initial = sub.value;
+            }.bind(this));
+            this.doneAssigningFirstCards = true;
+
+            this.log('The initial orders have been shown.');
+        }
+    },
+
+    SELECT_INITIAL_ORDERS: {
+        isHidden: true,
+        isLegal: function(value){
+            if (value.length !== 2) {
+                throw new Error('Two of the initial three orders must be held.');
+            }
+
+            value.forEach(function(order){
+                if (this.lookupPlayer[this.uid].initial.indexOf(order) === -1) {
+                    throw new Error('Illegal move');
+                }
+            }.bind(this));
+
+            return true;
+        },
+        getValue: function(){
+            return this.lookupPlayer[this.uid].unusableOrders;
+        },
+        setValue: function(value){
+            // user picks the card they want to keep, but we want to record their inaccessible cards, so we need to invert it
+            this.lookupPlayer[this.uid].unusableOrders = _.pull(this.lookupPlayer[this.uid].initial, value);
+        },
+        server: function(){
+            throw new Error('Server should never make this move')
+        },
+        run: function(action){
+            this.lookupPlayer[action.user].unusableOrders = action.value;
+            this.log(this.lookupPlayer[action.user].name + ' picked their initial orders.');
+        }
+    },
+
+    EXECUTE_ORDERS: {
+        server: function(){
+             return this.players.map(function(player){
+                 return { uid: player.id, value: player.unusableOrders };
+             }.bind(this));
+        },
+        run: function(action){
+            action.value.forEach(function(sub){
+                this.lookupPlayer[sub.uid].unusableOrders = sub.value;
+            }.bind(this));
+            this.serverDone = true;
+            this.log('The first set of unusable orders have been revealed.');
+        }
+    },
+
+    SELECT_MONSTER: {
+        isLegal: function() { return true },
+        server: function(){
+            return randomUniqueArray(3, 0, 12 - this.discardedMonsters.length - 1);
+        },
+        run: function(action){
+            this.monsters = action.value;
+            this.log('Monsters have walked into the inn.');
+        }
+    },
+
+    SELECT_ROOM: {
+        isLegal: function() { return true },
+        server: function(){
+            return randomUniqueArray(3, 0, 8 - this.discardedRooms.length - 1);
+        },
+        run: function(action){
+            this.rooms = action.value;
+            this.log('Rooms are available for rent.');
+        }
+    },
+
+    SELECT_ADVENTURER: {
+        server: function(){
+            var numberOfAdventurers = this.players.length === 4 ? 4 : 3;
+            return randomUniqueArray(numberOfAdventurers, 0, 16 - this.adventurers.length - 1);
+        },
+        run: function(action){
+            this.adventurers.concat(action.value);
+            this.log('Some adventurers are getting antsy...');
+        }
     }
 };
 
-Game.prototype._ActionHandlers = {
-    ASSIGN_PLAYER_ORDER: function(uid, v){
-        this.lookupPlayer[uid].order = v;
-    },
-    PHASE: function(){
-        if (this.phaseTrack.year === 0) {
-            this.phaseTrack.year = 1;
-            this.phaseTrack.phase = Phases.NEW_ROUND;
-        } else if (this.phaseTrack.phase === Phases.COMBAT_ROUND_FOUR) {
-            this.phaseTrack.year = this.phaseTrack.year + 1;
-            this.phaseTrack.phase = Phases.NEW_ROUND;
-        } else if (this.phaseTrack.phase === Phases.END_OF_ROUND && this.phaseTrack.season === Phases._SEASON.FALL) {
-            this.phaseTrack.phase = Phases.COMBAT_ROUND_ONE;
-            this.phaseTrack.season = Phases._SEASON.COMBAT;
-        } else if (this.phaseTrack.phase === Phases.END_OF_ROUND) {
-            this.phaseTrack.season = this.phaseTrack.season + 1;
-            this.phaseTrack.phase = Phases.NEW_ROUND;
-        } else {
-            this.phaseTrack.phase = this.phaseTrack.phase + 1;
-        }
-    },
-    GOLD: function(uid, v){
-        this.lookupPlayer[uid].gold += v;
-    },
-    IMPS: function(uid, v){
-        this.lookupPlayer[uid].imps += v;
-    },
-    FOOD: function(uid, v){
-        this.lookupPlayer[uid].food += v;
-    },
-    REP: function(uid, v){
-        var p = this.lookupPlayer[uid];
-        p.rep += v;
-        if (p.rep > 10) {
-            p.rep = 10;
-        } else if (p.rep < -4) {
-            p.rep = -4;
-        }
-    },
-    ROOM: function(uid, v){
-        this.lookupPlayer[uid].map[v.column][v.row] = v.id;
-    },
-    TRAP: function(uid, v){
-        this.lookupPlayer[uid].traps.concat(v);
-    },
-    REVEAL_MONSTER: function(uid, v){
-        this.monsters = v;
-    },
-    REVEAL_ROOM: function(uid, v){
-        this.rooms = v;
-    },
-    ASSIGN_SECRET_ORDER: function(uid, v){
-        this.lookupPlayer[uid].order = v;
-    },
-    PICK_INITIAL_ORDERS: function(uid, v){
-        this.lookupPlayer[uid].initial = v;
-    },
-    SLOT_UNUSABLE_ORDER: function(uid, v){
-        this.lookupPlayer[uid].unusableOrders.push(v);
-    },
-    ASSIGN_DUMMY_MARKER: function(uid, v){
-        this.dummyOrders = v;
-    },
-
-    ORDERS_PICKED: function(uid, v){
-        this.lookupPlayer[uid].ordersPicked = v;
+var Player = function(doc) {
+    if (!doc || !doc._id) {
+        throw new Error('Player needs an id and a game reference');
     }
+
+    this.id = doc._id;
+    this.doc = doc;
+
+    this.initialize();
 };
+
+Player.prototype.initialize = function(){
+    this.name = this.doc.name || this.doc._id; // TODO: get the correct name
+
+    this.gold = 3;
+    this.imps = 3;
+    this.food = 3;
+
+    // Turn order. Higher is better!
+    this.order = 0;
+
+    // Evilmeter. Higher means more evil.
+    this.rep = 0;
+
+    // A 2d array indicating the contents of your dungeon layout. Access as [column][row]
+    this.dungeon = [[0,0,0,0],[0,0,0,0],[Game.Room.TUNNEL,Game.Room.TUNNEL,Game.Room.TUNNEL,0],[0,0,0,0],[0,0,0,0]];
+
+    // The collection of your prison, used for points/trophies at the end
+    this.prison = [];
+
+    // The line outside of your door. Index 0 represents the space closest to the door.
+    this.adventurers = [];
+
+    // PRIVATE CONTENTS, but the length is public. Private traps are added as 0's.
+    this.traps = [];
+
+    // How many -3 point marks you have on your account. These are the red cubes in the upper right of the board
+    this.deadLetters = [];
+
+    // Ids of monsters you have
+    this.monsters = [];
+
+    // Starting hand. You must pick one to keep and two to put in unusable orders
+    this.initial = null;
+
+    // SECRET. The orders you have selected. Secret until they are revealed
+    this.orders = [0,0,0];
+
+    // The orders you cannot choose. Public knowledge,
+    this.unusableOrders = [];
+
+    // The orders you picked but couldn't or didn't want to use.
+    this.didnotuse = [];
+
+    this.ordersPicked = null;
+};
+
+Game.Player = Player;
 
 module.exports = Game;
+
+function randomUniqueArray(length, min, max) {
+    var rands = [], tries = 0;
+    do {
+        if (tries++ > 100) {
+            throw new Error('Had a problem generating unique random numbers');
+        }
+        rands = rands.push(_.random(min, max)) && _.uniq(rands);
+    } while (rands.length !== length);
+    return rands;
+}

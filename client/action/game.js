@@ -17,5 +17,13 @@ module.exports = {
 
     makeMove: function(state) {
         this.dispatch('MAKE_MOVE', state);
+    },
+
+    undoClicked: function() {
+        this.dispatch('UNDO');
+    },
+
+    orderClicked: function(order) {
+        this.dispatch('ORDER', order);
     }
 };

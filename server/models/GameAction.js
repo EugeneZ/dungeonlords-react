@@ -2,8 +2,7 @@
 
 var _ = require('lodash'),
     mongoose = require('mongoose'),
-    Schema = mongoose.Schema,
-    Actions = require('../../game/dungeonlords/Actions');
+    Schema = mongoose.Schema;
 
 /**
  * GameAction Schema
@@ -64,14 +63,6 @@ GameActionSchema.methods = {
         //var logic = new DLGame(mongoose.model('Game').get(this.game));
         //return logic.legalMove(this);
         return { legal: true };
-    },
-
-    isPrivate: function() {
-        return Actions._privateValues.indexOf(this.action) !== -1;
-    },
-
-    isServer: function() {
-        return Actions._serverValues.indexOf(this.action) !== -1;
     }
 };
 
@@ -83,7 +74,7 @@ GameActionSchema.statics.record = function(action, cb){
         if (err) {
             throw new Error(err);
         } else if (cb) {
-            cb(action);
+            cb(action._doc);
         }
     })
 };

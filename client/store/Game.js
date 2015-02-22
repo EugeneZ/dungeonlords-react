@@ -22,29 +22,17 @@ module.exports = fluxxor.createStore(protectedStore({
             return this.move;
         },
         getLog: function() {
-            return this.actions.map(function(action){
-                switch(action.action){
-                    case 1:
-                        return 'Player ' + action.user + ' rolled a ' + action.value + ' for turn order.';
-                    case 2:
-                        return 'Moving on to phase #' + action.value;
-                    case 3:
-                        return 'Player ' + action.user + ' got ' + action.value + ' gold';
-                    case 4:
-                        return 'Player ' + action.user + ' got ' + action.value + ' imps';
-                    case 5:
-                        return 'Player ' + action.user + ' got ' + action.value + ' food';
-                    case 6:
-                        return 'Player ' + action.user + ' placed a tunnel in location: ' + action.value;
-                    case 15:
-                        return 'Player ' + action.user + ' is deciding which orders to start the game with';
-                    default:
-                        return 'Mysterious log message.';
-                }
-            });
+            if (!this.logic) {
+                return [];
+            } else {
+                return this.logic.getLog();
+            }
         },
         getLogic: function(){
             return this.logic || null;
+        },
+        getOrder: function(){
+            return this.order || null;
         }
     },
 
@@ -65,7 +53,7 @@ module.exports = fluxxor.createStore(protectedStore({
         }.bind(this));
 
         io.on('GameAction', function(action){
-            this.pushAction(action);
+            this.loadActions(action);
             this.emit('change');
         }.bind(this));
 
@@ -78,7 +66,9 @@ module.exports = fluxxor.createStore(protectedStore({
             NEW_GAME_FAILURE: this.newGameFailed,
             GAME_SUCCESS: this.newGame,
             GAME_FAILURE: this.newGameFailed,
-            MAKE_MOVE: this.makeMove
+            MAKE_MOVE: this.makeMove,
+            UNDO: this.undo,
+            ORDER: this.orderClicked
         };
     },
 
@@ -101,31 +91,43 @@ module.exports = fluxxor.createStore(protectedStore({
 
     loadInitial: function() {
         this.game = domUtils.getInitialData('game');
+        this.user = domUtils.getInitialData('loggedInUser');
         if (this.game) {
             io.emit('JoinGame', { game: this.game._id });
         }
     },
 
-    loadActions: function(actions) {
-        this.actions = actions;
-        this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
-        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id).move;
+    loadActions: function(actionOrActions) {
+        if (actionOrActions.length) {
+            this.actions = actionOrActions;
+        } else {
+            this.actions.push(actionOrActions);
+        }
+        this.logic = new Game(this.game, this.actions, this.user._id); // TODO: making a new game every time can be expensive
+        this.move = this.logic.next.forPlayer[this.user._id];
         console.log(this.logic);
+        console.log('Move: ', this.move);
     },
 
-    pushAction: function(action) {
-        this.actions.push(action);
-        this.logic = new Game(this.game, this.actions); // TODO: making a new game every time can be expensive
-        this.move = this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id).move;
-    },
+    makeMove: function() {
+        this.logic.setValueForMove(this.order);
 
-    makeMove: function(state) {
-        io.emit('PostGameAction', { game: this.game._id, move: {
-            type: this.move,
-            value: this.logic.nextMove(this.flux.store('Users').getLoggedInUser()._id).value()
-        } });
+        io.emit('PostGameAction', {
+            game: this.game._id,
+            value: this.logic.getValueForMove()
+        });
 
         this.move = Game.Move.WAITING_FOR_OTHERS;
+        this.emit('change');
+    },
+
+    orderClicked: function(order) {
+        this.order = order;
+        this.emit('change');
+    },
+
+    undo: function() {
+        this.order = null;
         this.emit('change');
     }
 }));

@@ -1,106 +1,95 @@
 var _ = require('lodash'),
     mongoose = require('mongoose'),
-    Game = require('./../../../game/dungeonlords/Game'),
-    Actions = require('./../../../game/dungeonlords/Actions');
+    Game = require('./../../../game/dungeonlords/Game');
+
+var maxServerMoves = 50,
+    movesMade = 0;
 
 module.exports = {
+
+    // checks if the server needs to make moves on game start up.
     newGameSetup: function(game) {
-        // Setup can only be done before any actions
-        if (game.actions && game.actions.length) {
-            throw new Error('Cannot setup a game that already has actions');
-        }
-
-        var gid = game._id,
-            GameAction = mongoose.model('GameAction');
-
-        // Determine player order
-        var rands = randomUniqueArray(game.players.length, 1, 10000);
-
-        // Give players their starting order and other stuff
-        game.players.forEach(function(user, i){
-            if (!user) {
-                return;
-            }
-
-            var uid = user._id;
-
-            // order
-            GameAction.record({
-                game: gid,
-                user: uid,
-                action: Actions.ASSIGN_PLAYER_ORDER.value,
-                value: rands[i]
-            });
-
-            // gold
-            GameAction.record({
-                game: gid,
-                user: uid,
-                action: Actions.GOLD.value,
-                value: 3
-            });
-
-            // imps
-            GameAction.record({
-                game: gid,
-                user: uid,
-                action: Actions.IMPS.value,
-                value: 3
-            });
-
-            // food
-            GameAction.record({
-                game: gid,
-                user: uid,
-                action: Actions.FOOD.value,
-                value: 3
-            });
-
-            // initial orders
-            GameAction.record({
-                game: gid,
-                user: uid,
-                action: Actions.PICK_INITIAL_ORDERS.value,
-                value: randomUniqueArray(3, 1, 8)
-            });
-        }.bind(this));
+        game = new Game(game, []);
+        makeServerMovesFn(game);
     },
 
-    move: function(gid, user, move, cb){
-        getGame(gid, function(game){
+    // checks to see if the server needs to make some moves when someone joins a game. This is the only way to unstick stuck games
+    joinGameSetup: function(gid, uid, fcb) {
+        getGame(gid, uid, function(game){
+            makeServerMovesFn(game);
+        }, fcb);
+    },
 
-            var nextMoveData = game.nextMove(user._id);
+    // A user wants to make a move. This may result in the server making follow-up moves
+    move: function(gid, uid, value, cb, fcb){
+        getGame(gid, uid, function(game){
+            recordMoveValue(game, value, false, cb)
+        }, fcb);
+    },
 
-            mongoose.model('GameAction').record({
-                game: gid,
-                user: user._id,
-                action: nextMoveData.value,
-                value: nextMoveData.validate(move.value)
-            }, cb);
-
-        }, function(err){
-            io.emit('Error', { message: err });
+    // Retrieves the list of existing moves. They may be filtered based on user.
+    getMoves: function(gid, cb, fcb){
+        mongoose.model('GameAction').find({ game: gid }, function(err, actions){
+            if (err) {
+                return fcb(err);
+            } else {
+                cb(actions);
+            }
         });
     }
 };
 
-function getGame(game, cb, fcb){
-    mongoose.model('Game').findById(game, function(err, gameDoc){
-        if (err) return fcb(err);
-        mongoose.model('GameAction').find({ game: game }, function(err, gameActionDocs){
-            if (err) return fcb(err);
-            cb(new Game(gameDoc, gameActionDocs));
+function getGame(gid, uid, cb, fcb) {
+    mongoose.model('Game').findById(gid, function(err, gameDoc){
+        if (err) {
+            return fcb(err);
+        }
+
+        mongoose.model('GameAction').find({ game: gid }, function(err, gameActionDocs){
+            if (err) {
+                return fcb(err);
+            }
+
+            cb(new Game(gameDoc, gameActionDocs, uid));
         });
     });
 }
 
-function randomUniqueArray(length, min, max) {
-    var rands = [], tries = 0;
-    do {
-        if (tries++ > 100) {
-            throw new Error('Had a problem generating unique random numbers');
+function makeServerMovesFn(game, cb) {
+    if (game.next.forPlayer.Server !== Game.Move.WAITING_FOR_OTHERS) {
+
+        // Check if we're in an infinite loop
+        if (movesMade++ >= maxServerMoves) {
+            throw new Error('Server was making too many moves! Infinite loop?');
         }
-        rands = rands.push(_.random(min, max)) && _.uniq(rands);
-    } while (rands.length !== length);
-    return rands;
+
+        // server makes move using recursion
+        recordMoveValue(game, game.getServerMoveValue(), true, cb);
+    } else {
+        movesMade = 0;
+    }
+}
+
+function recordMoveValue(game, value, isServer, cb) {
+    if (!isServer && !game.isLegal(value)){
+        throw new Error('Illegal move... TODO: this should be reported to the client somehow'); //TODO
+    }
+
+    mongoose.model('GameAction').record({
+        game: game.doc._id,
+        user: game.uid === 'Server' ? null : game.uid,
+        action: game.next.forPlayer[isServer ? 'Server' : game.uid],
+        value: value
+    }, function(action) {
+
+        if (cb) {
+            cb(action);
+        }
+
+        // Update the game and check if the server needs to make a move
+        game.actions.push(action);
+        game.run();
+        makeServerMovesFn(game, cb);
+
+    });
 }
