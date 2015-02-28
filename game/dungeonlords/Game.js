@@ -277,7 +277,7 @@ Game.prototype._next = function(){
             next.forPlayer.Server = Game.Move.SELECT_MONSTER;
         } else if (this.rooms.length < 2) {
             next.forPlayer.Server = Game.Move.SELECT_ROOM;
-        } else if (this.adventurers < this._numberOfAdventurers()) {
+        } else if (this.adventurers.length < this._numberOfAdventurers()) {
             next.forPlayer.Server = Game.Move.SELECT_ADVENTURER;
         //} else if (this.phaseTrack.season !== Game.Season.FALL && this.events[this.phaseTrack.season-1]) {
             // TODO: Flip event tile, show card if neccessary
@@ -628,7 +628,7 @@ Game.prototype._MoveHandlers = {
             return randomUniqueArray(numberOfAdventurers, 0, 16 - this.adventurers.length - 1);
         },
         run: function(action){
-            this.adventurers.concat(action.value);
+            this.adventurers = this.adventurers.concat(action.value);
             this.log('Some adventurers are getting antsy...');
         }
     }
@@ -680,7 +680,7 @@ Player.prototype.initialize = function(){
     this.initial = null;
 
     // SECRET. The orders you have selected. Secret until they are revealed
-    this.orders = [0,0,0];
+    this.orders = [];
 
     // The orders you cannot choose. Public knowledge,
     this.unusableOrders = [];

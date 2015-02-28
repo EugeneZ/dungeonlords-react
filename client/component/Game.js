@@ -169,7 +169,7 @@ module.exports = React.createClass({
         } else if (this.state.move === Game.Move.SELECT_ORDERS) {
             className = 'warning';
             message = 'Select your orders for your minions.';
-            selection = this.renderOrders(this.state.logic.lookupPlayer[this.state.me._id].orders);
+            selection = this.renderOrders(_.difference([1,2,3,4,5,6,7,8], this.state.logic.lookupPlayer[this.state.me._id].unusableOrders));
         } else {
             className = 'danger';
             message = 'Something went wrong.'
