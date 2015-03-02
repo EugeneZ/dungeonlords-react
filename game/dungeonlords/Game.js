@@ -335,6 +335,7 @@ Game.prototype.nextForGameStart = function(next){
     if (everyPlayerIsDone && this.serverDone) {
         return this._nextPhase();
     } else if (everyPlayerIsDone) {
+        this.orderResolver();
         next.forPlayer.Server = Game.Move.EXECUTE_ORDERS;
     } else {
         this.eachPlayer(function(player) {
@@ -422,7 +423,7 @@ Game.prototype.dummyOrderResolver = function(){
 Game.prototype.orderResolver = function(){
     var board = this.dummyOrderResolver();
 
-    var playerOrder = _.pluck(this.players, 'id').sort();
+    var playerOrder = _.pluck(this.players, 'order').sort();
 
     // in a two player game, the players select the final dummy order from the dummy's leftover cards,
     // this is the last order in their order array
@@ -630,6 +631,36 @@ Game.prototype._MoveHandlers = {
         run: function(action){
             this.adventurers = this.adventurers.concat(action.value);
             this.log('Some adventurers are getting antsy...');
+        }
+    },
+
+    SELECT_ORDERS: {
+        isHidden: true,
+        isLegal: function(value){
+            if (value.length !== 3) {
+                throw new Error('You must select three orders');
+            }
+
+            value.forEach(function(order){
+                if (order < 1 || order > 8 || this.lookupPlayer[this.uid].unusableOrders.indexOf(order) > -1) {
+                    throw new Error('Illegal move');
+                }
+            }.bind(this));
+
+            return true;
+        },
+        setValue: function(value){
+            this.lookupPlayer[this.uid].orders = value;
+        },
+        getValue: function(){
+            return this.lookupPlayer[this.uid].orders;
+        },
+        server: function(){
+            throw new Error('Server should never make this move')
+        },
+        run: function(action){
+            this.lookupPlayer[action.user].orders = action.value;
+            this.log(this.lookupPlayer[action.user].name + ' picked their orders.');
         }
     }
 };

@@ -42,6 +42,8 @@ module.exports = fluxxor.createStore(protectedStore({
         this.loading = false;
         this.errors = [];
         this.move = Game.Move.WAITING_FOR_SERVER;
+        this.order = null;
+        this.orders = [];
 
         io.on('JoinGameSuccess', function(){
             io.emit('GetGameActions', { game: this.game._id });
@@ -110,7 +112,11 @@ module.exports = fluxxor.createStore(protectedStore({
     },
 
     makeMove: function() {
-        this.logic.setValueForMove(this.order);
+        if (this.move === Game.Move.SELECT_INITIAL_ORDERS) {
+            this.logic.setValueForMove(this.order);
+        } else if (this.move === Game.Move.SELECT_ORDERS) {
+            this.logic.setValueForMove(this.orders);
+        }
 
         io.emit('PostGameAction', {
             game: this.game._id,
@@ -122,12 +128,20 @@ module.exports = fluxxor.createStore(protectedStore({
     },
 
     orderClicked: function(order) {
-        this.order = order;
+        if (this.move === Game.Move.SELECT_INITIAL_ORDERS) {
+            this.order = order;
+        } else if (this.move === Game.Move.SELECT_ORDERS) {
+            if (this.orders.length === 3) {
+                this.orders = [];
+            }
+            this.orders.push(order);
+        }
         this.emit('change');
     },
 
     undo: function() {
         this.order = null;
+        this.orders = [];
         this.emit('change');
     }
 }));
