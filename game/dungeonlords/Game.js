@@ -541,13 +541,24 @@ Game.prototype._MoveHandlers = {
     ASSIGN_INITIAL_ORDERS: {
         isHidden: true,
         server: function() {
-            return this.players.map(function(player){
+            var retval = this.players.map(function(player){
                 return { uid: player.id, value: randomUniqueArray(3, 1, 8) };
             }.bind(this));
+
+            // Dummy players initial inaccessible orders are chosen at this time
+            _.times(4 - this.players.length, function(i){
+                retval.push({ dummy: i, value: randomUniqueArray(3, 1, 8) });
+            });
+
+            return retval;
         },
         run: function(action) {
             action.value.forEach(function(sub){
-                this.lookupPlayer[sub.uid].initial = sub.value;
+                if ('uid' in sub) {
+                    this.lookupPlayer[sub.uid].initial = sub.value;
+                } else {
+                    this.dummyOrders[sub.dummy] = sub.value;
+                }
             }.bind(this));
             this.doneAssigningFirstCards = true;
 
