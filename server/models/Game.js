@@ -3,7 +3,8 @@
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     GameServer = require('../game/dungeonlords/Server'),
-    debug = require('debug')('db');
+    debug = require('debug')('db'),
+    _ = require('lodash');
 
 /**
  * Game Schema
@@ -39,6 +40,8 @@ GameSchema.pre('save', function(next) {
     } else if (this.isNew) {
         var errors = false;
 
+        this.players = _.compact(this.players);
+
         mongoose.model('User').update(
             { _id: { $in: this.players } },
             { $push: { games: { _id: this._id }}},
@@ -62,7 +65,7 @@ GameSchema.pre('save', function(next) {
  * Post-save hook
  */
 GameSchema.post('save', function(game) {
-    GameServer.newGameSetup(game);
+    //GameServer.newGameSetup(game);
 });
 
 /**

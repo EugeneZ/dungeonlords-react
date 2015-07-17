@@ -1,8 +1,28 @@
-'use strict';
-
-var api = require('../api');
+var api = require('../api'),
+    router = require('../router');
 
 module.exports = {
+    newGame: function(data) {
+        this.dispatch('NEW_GAME');
+
+        if (data.player3 === -3){
+            delete data.player3;
+        }
+
+        if (data.player4 === -4) {
+            delete data.player4;
+        }
+
+        api.Games.post(data).then(function(response) {
+            this.dispatch('NEW_GAME_SUCCESS', response);
+            if (response && response._id) {
+                router.transitionTo('game', { id: response._id});
+            }
+        }.bind(this), function(err){
+            this.dispatch('NEW_GAME_FAILURE', err);
+        }.bind(this));
+    },
+
     load: function (id) {
         var game = this.flux.store('Game').getGame();
 
@@ -15,8 +35,8 @@ module.exports = {
         }
     },
 
-    makeMove: function(state) {
-        this.dispatch('MAKE_MOVE', state);
+    makeMove: function() {
+        this.dispatch('MAKE_MOVE');
     },
 
     undoClicked: function() {

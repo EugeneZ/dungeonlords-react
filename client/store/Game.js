@@ -12,14 +12,8 @@ module.exports = fluxxor.createStore(protectedStore({
         isLoading: function () {
             return !!this.loading;
         },
-        getErrors: function () {
-            return this.errors || [];
-        },
         getGame: function() {
             return this.game || null;
-        },
-        getMove: function() {
-            return this.move;
         },
         getLog: function() {
             if (!this.logic) {
@@ -30,9 +24,6 @@ module.exports = fluxxor.createStore(protectedStore({
         },
         getLogic: function(){
             return this.logic || null;
-        },
-        getOrder: function(){
-            return this.order || null;
         }
     },
 
@@ -41,9 +32,6 @@ module.exports = fluxxor.createStore(protectedStore({
         this.actions = [];
         this.loading = false;
         this.errors = [];
-        this.move = Game.Move.WAITING_FOR_SERVER;
-        this.order = null;
-        this.orders = [];
 
         io.on('JoinGameSuccess', function(){
             io.emit('GetGameActions', { game: this.game._id });
@@ -58,8 +46,6 @@ module.exports = fluxxor.createStore(protectedStore({
             this.loadActions(action);
             this.emit('change');
         }.bind(this));
-
-        this.loadInitial();
     },
 
     bindActions: function () {
@@ -91,31 +77,21 @@ module.exports = fluxxor.createStore(protectedStore({
         this.emit('change');
     },
 
-    loadInitial: function() {
-        this.game = domUtils.getInitialData('game');
-        this.user = domUtils.getInitialData('loggedInUser');
-        if (this.game) {
-            io.emit('JoinGame', { game: this.game._id });
-        }
-    },
-
     loadActions: function(actionOrActions) {
+        var user = this.flux.store('Users').getLoggedInUser();
         if (actionOrActions.length) {
             this.actions = actionOrActions;
         } else {
             this.actions.push(actionOrActions);
         }
-        this.logic = new Game(this.game, this.actions, this.user._id); // TODO: making a new game every time can be expensive
-        this.move = this.logic.next.forPlayer[this.user._id];
-        console.log(this.logic);
-        console.log('Move: ', this.move);
+        this.logic = new Game(this.game, this.actions, user.id); // TODO: making a new game every time can be expensive
     },
 
     makeMove: function() {
         if (this.move === Game.Move.SELECT_INITIAL_ORDERS) {
             this.logic.setValueForMove(this.order);
         } else if (this.move === Game.Move.SELECT_ORDERS) {
-            this.logic.setValueForMove(this.orders);
+            this.logic.setValueForMove(_.compact(this.orders.concat(this.selectedDummyOrder)));
         }
 
         io.emit('PostGameAction', {
@@ -124,24 +100,6 @@ module.exports = fluxxor.createStore(protectedStore({
         });
 
         this.move = Game.Move.WAITING_FOR_OTHERS;
-        this.emit('change');
-    },
-
-    orderClicked: function(order) {
-        if (this.move === Game.Move.SELECT_INITIAL_ORDERS) {
-            this.order = order;
-        } else if (this.move === Game.Move.SELECT_ORDERS) {
-            if (this.orders.length === 3) {
-                this.orders = [];
-            }
-            this.orders.push(order);
-        }
-        this.emit('change');
-    },
-
-    undo: function() {
-        this.order = null;
-        this.orders = [];
         this.emit('change');
     }
 }));

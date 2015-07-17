@@ -28,6 +28,16 @@ var Player = function(name, id){
     this.getId = function() { return id; };
     this.getName = function() { return name; };
 
+    var waiting = false;
+    this.isWaiting = function() { waiting = true; };
+
+    var directive;
+    this.getDirective = function() { return directive; };
+    this.setDirective = function(dctive) {
+        directive = dctive;
+        waiting = false;
+    };
+
     var action = null;
     this.getAction = function() { return action; };
 
@@ -168,19 +178,9 @@ var Player = function(name, id){
         return !!deadLetters++;
     };
 
-    // Starting hand. You must pick one to keep and two to put in unusable orders
-    this.initial = null;
-
-    // SECRET. The orders you have selected. Secret until they are revealed
-    this.orders = [];
-
-    // The orders you cannot choose. Public knowledge,
-    this.unusableOrders = [];
-
-    // The orders you picked but couldn't or didn't want to use.
-    this.didnotuse = [];
-
-    this.ordersPicked = null;
+    var heldOrders = [];
+    this.getHeldOrders = function(){ return Immutable.fromJS(heldOrders); };
+    this.setHeldOrders = function(orders) { heldOrders = orders; }
 };
 
 module.exports = Player;

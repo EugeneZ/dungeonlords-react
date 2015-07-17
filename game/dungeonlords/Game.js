@@ -1,9 +1,12 @@
-var _ = require('lodash');
-var Action = require('./Action');
-var Player = require('./Player');
-var MathUtil = require('../MathUtil');
+var _ = require('lodash'),
+    Action = require('./Action'),
+    Player = require('./Player'),
+    MathUtil = require('../MathUtil'),
+    PickOrdersComponent = typeof window !== 'undefined' ? require('./component/PickOrders') : null;
 
-var Game = function(gameDoc, actionDocs, playerId, options) {
+var Game = function(gameDoc, actionDocs, playerId, server, options) {
+    options = options || {};
+
     //
     // PRIVATE MEMBER DECLARATIONS //
     var actions,
@@ -11,39 +14,50 @@ var Game = function(gameDoc, actionDocs, playerId, options) {
         serverMoves = [],
         logs = [],
         players = [],
+        thisPlayer,
         playerOrder,
         round = 0;
 
     //
     // PUBLIC METHOD DECLARATIONS //
     /**
+     * getLog
      * Fetches the array of log messages.
      * @returns {Array} Message strings.
      */
-    this.prototype.getLog = function(){
+    this.getLog = function(){
         return logs;
     };
 
     /**
+     * getServerMoves
      * Returns the list of actions the server should take.
      * @returns {Array}
      */
-    this.prototype.getServerMoves = function(){
+    this.getServerMoves = function(){
         return serverMoves;
     };
 
     /**
-     * Returns the instructions for the players.
+     * getPlayerDirective
+     * Returns the instructions for the player.
      * @returns {Array}
      */
-    this.prototype.getPlayerDirectives = function(){
-        return players.map(function(player){
-            return player.getDirectives();
-        })
+    this.getPlayerDirective = function(){
+        return thisPlayer.getDirective();
     };
 
-    this.prototype.makePlayerMove = function(move){
+    /**
+     * makePlayerMove
+     * Records a move for the active player
+     * @param data
+     */
+    this.makePlayerMove = function(data){
+        makePlayerMove(data);
+    };
 
+    this.isLegal = function(move){
+        return true;
     };
 
     //
@@ -70,6 +84,14 @@ var Game = function(gameDoc, actionDocs, playerId, options) {
         if (options.isServer) {
             serverMoves.push(data.serialize());
         }
+    };
+
+    /**
+     * Records a move for the active player
+     * @param data
+     */
+    var makePlayerMove = function(data) {
+
     };
 
     /**
@@ -143,7 +165,7 @@ var Game = function(gameDoc, actionDocs, playerId, options) {
             makeServerMove(initialOrdersAction);
             return false;
         }
-        log('Initial orders have been selected for all players.');
+        log('Initial orders have been given to all players.');
 
         var heldOrdersActions = getActions(Action.Type.SELECT_INITIAL_ORDERS);
         if (heldOrdersActions.length !== players.length) {
@@ -152,10 +174,15 @@ var Game = function(gameDoc, actionDocs, playerId, options) {
                     player.isWaiting();
                 } else {
                     player.setDirective({
-                        component: PickInitialHeldOrder
+                        component: PickOrdersComponent,
+                        props: {
+                            mode: 'initial',
+                            orders: initialOrders.getInitialOrders(player.getId()),
+                            onSubmit: makePlayerMove.bind(this)
+                        }
                     });
                 }
-            });
+            }.bind(this));
             return false;
         }
 
@@ -185,6 +212,34 @@ var Game = function(gameDoc, actionDocs, playerId, options) {
         log('Round ' + round + ' begins! The Ministry has made new choices available on the board.')
     };
 
+    var ordersPhase = function(){
+        return false;
+    };
+
+    var productionPhase = function(){
+        return false;
+    };
+
+    var eventPhase = function(){
+        return false;
+    };
+
+    var adventurersPhase = function(){
+        return false;
+    };
+
+    var endOfRound = function(){
+        return false;
+    };
+
+    var combat = function(){
+        return false;
+    };
+
+    var endOfGame = function(){
+        return false;
+    };
+
     //
     // INITIALIZATION -- Start here! //
     actions = actionDocs.sort(function (a, b) {
@@ -192,7 +247,11 @@ var Game = function(gameDoc, actionDocs, playerId, options) {
     });
 
     for (var i = 0; i < gameDoc.players.length; i++) {
-        players.push(new Player('name', gameDoc.players[i].uid));
+        var playerHolder = new Player('name', gameDoc.players[i].id);
+        if (playerId === gameDoc.players[i].id) {
+            thisPlayer = playerHolder;
+        }
+        players.push(playerHolder);
     }
 
     play();

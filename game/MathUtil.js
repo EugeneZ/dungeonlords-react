@@ -1,3 +1,5 @@
+var _ = require('lodash');
+
 var GameMath = {
     randomUniqueArray: function (length, min, max) {
         var rands = [], tries = 0;

@@ -10,8 +10,15 @@ var ref = function(id) {
 
 module.exports = {
     Users: {
-        get: function(){
-            return client({ path: path + 'Users' }).then(function(response){ return response.entity; });
+        get: function(id, isGameId){
+            var suffix = 'Users';
+            if (id && isGameId) {
+                var query = JSON.stringify({ games: [id] });
+                suffix = 'Users?query=' + query;
+            } else if (id) {
+                suffix = 'User/' + id;
+            }
+            return client({ path: path + suffix }).then(function(response){ return response.entity; });
         }
     },
 

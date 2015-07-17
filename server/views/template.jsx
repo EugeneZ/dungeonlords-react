@@ -11,6 +11,7 @@ module.exports = React.createClass({
                     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet"/>
                     <script src="//code.jquery.com/jquery-2.1.3.min.js"/>
                     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"/>
+                    <script dangerouslySetInnerHTML={{__html: 'var DungeonLords = ' + JSON.stringify({ loggedInUser: this.props.user})}}/>
 
                     <link rel="shortcut icon" href="/assets/images/favicon.ico"/>
                     <link rel="icon" sizes="16x16 32x32 64x64" href="/assets/images/favicon.ico"/>

@@ -11,6 +11,7 @@ module.exports = function(){
         <Route handler={Client}>
             <Route name="game" path="/game/:id" handler={Game}/>
             <Route name="new" handler={NewGame}/>
+            <Route name="games" handler={GamesList}/>
             <DefaultRoute handler={GamesList}/>
         </Route>
     );

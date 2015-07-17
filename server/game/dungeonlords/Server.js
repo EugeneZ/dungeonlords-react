@@ -2,28 +2,25 @@ var _ = require('lodash'),
     mongoose = require('mongoose'),
     Game = require('./../../../game/dungeonlords/Game');
 
-var maxServerMoves = 50,
-    movesMade = 0;
-
 module.exports = {
 
     // checks if the server needs to make moves on game start up.
-    newGameSetup: function(game) {
-        game = new Game(game, []);
-        makeServerMovesFn(game);
+    newGameSetup: function(gameDoc) {
+        game = new Game(gameDoc, [], null, null, { isServer: true });
+        makeServerMovesFn(game, gameDoc, null, null, function(){});
     },
 
     // checks to see if the server needs to make some moves when someone joins a game. This is the only way to unstick stuck games
     joinGameSetup: function(gid, uid, fcb) {
-        getGame(gid, uid, function(game){
-            makeServerMovesFn(game);
+        getGame(gid, uid, function(game, gameDoc){
+            makeServerMovesFn(game, gameDoc, uid, null, fcb);
         }, fcb);
     },
 
     // A user wants to make a move. This may result in the server making follow-up moves
     move: function(gid, uid, value, cb, fcb){
-        getGame(gid, uid, function(game){
-            recordMoveValue(game, value, false, cb)
+        getGame(gid, uid, function(game, gameDoc){
+            recordMoveValue(game, gameDoc, uid, value, false, cb, fcb)
         }, fcb);
     },
 
@@ -50,36 +47,30 @@ function getGame(gid, uid, cb, fcb) {
                 return fcb(err);
             }
 
-            cb(new Game(gameDoc, gameActionDocs, uid));
+            cb(new Game(gameDoc, gameActionDocs, uid), gameDoc);
         });
     });
 }
 
-function makeServerMovesFn(game, cb) {
-    if (game.next.forPlayer.Server !== Game.Move.WAITING_FOR_OTHERS) {
-
-        // Check if we're in an infinite loop
-        if (movesMade++ >= maxServerMoves) {
-            throw new Error('Server was making too many moves! Infinite loop?');
-        }
-
-        // server makes move using recursion
-        recordMoveValue(game, game.getServerMoveValue(), true, cb);
-    } else {
-        movesMade = 0;
+function makeServerMovesFn(game, gameDoc, uid, cb, fcb) {
+    var moves = game.getServerMoves();
+    if (moves && moves.length) {
+        moves.forEach(function(move){
+            recordMoveValue(game, gameDoc, uid, move, true, cb, fcb);
+        });
     }
 }
 
-function recordMoveValue(game, value, isServer, cb) {
-    if (!isServer && !game.isLegal(value)){
+function recordMoveValue(game, gameDoc, uid, move, isServer, cb, fcb) {
+    if (!isServer && !game.isLegal(move)){
         throw new Error('Illegal move... TODO: this should be reported to the client somehow'); //TODO
     }
 
     mongoose.model('GameAction').record({
-        game: game.doc._id,
-        user: game.uid === 'Server' ? null : game.uid,
-        action: game.next.forPlayer[isServer ? 'Server' : game.uid],
-        value: value
+        game: gameDoc._id,
+        user: isServer ? null : uid,
+        action: move.type,
+        value: move.value
     }, function(action) {
 
         if (cb) {
@@ -87,9 +78,7 @@ function recordMoveValue(game, value, isServer, cb) {
         }
 
         // Update the game and check if the server needs to make a move
-        game.actions.push(action);
-        game.run();
-        makeServerMovesFn(game, cb);
+        makeServerMovesFn(getGame(gameDoc._id, uid, cb, fcb), gameDoc, uid, cb, fcb);
 
     });
 }

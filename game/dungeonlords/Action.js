@@ -40,8 +40,8 @@ var Type = Action.Type = {
 Action[Type.ASSIGN_PLAYER_ORDER] = {
     serverOnly: true,
     create: function(orderArray) {
-        return function(){
-            this.prototype.serialize = function(){ return { type: Type.ASSIGN_PLAYER_ORDER, value: orderArray }; };
+        return new function(){
+            this.serialize = function(){ return { type: Type.ASSIGN_PLAYER_ORDER, value: orderArray }; };
         };
     },
 
@@ -53,15 +53,15 @@ Action[Type.ASSIGN_PLAYER_ORDER] = {
 Action[Type.ASSIGN_INITIAL_ORDERS] = {
     serverOnly: true,
     create: function() {
-        return function(){
+        return new function(){
             var value = [];
-            this.prototype.serialize = function() {
+            this.serialize = function() {
                 return { type: Type.ASSIGN_INITIAL_ORDERS, value: value };
             };
-            this.prototype.addPlayer = function(id, orderArray) {
+            this.addPlayer = function(id, orderArray) {
                 value.push({ id: id, orders: value });
             };
-            this.prototype.addDummyPlayer = function(orderArray, associatedPlayerId) {
+            this.addDummyPlayer = function(orderArray, associatedPlayerId) {
                 value.push({ id: associatedPlayerId, dummy: true, orders: orderArray });
             }
         };
@@ -92,18 +92,18 @@ Action[Type.ASSIGN_INITIAL_ORDERS] = {
                     return result.orders;
                 }
             }
-        }
+        };
     }
 };
 
 Action[Type.SELECT_INITIAL_ORDERS] = {
     secret: true,
     create: function(playerId, orderArray){
-        return function(){
-            this.prototype.serialize = function(){
+        return new function(){
+            this.serialize = function(){
                 return { type: Type.SELECT_INITIAL_ORDERS, value: { id: playerId, orders: orderArray } };
             };
-        }
+        };
     },
 
     deserialize: function(data){
@@ -114,15 +114,15 @@ Action[Type.SELECT_INITIAL_ORDERS] = {
 Action[Type.REVEAL_INITIAL_ORDERS] = {
     serverOnly: true,
     create: function(){
-        return function(){
+        return new function(){
             var value = [];
-            this.prototype.serialize = function(){
+            this.serialize = function(){
                 return { type: Type.REVEAL_INITIAL_ORDERS, value: value };
             };
-            this.prototype.addPlayer = function(playerId, ordersArray) {
+            this.addPlayer = function(playerId, ordersArray) {
                 value.push({ id: playerId, orders: ordersArray });
             };
-        }
+        };
     },
 
     deserialize: function(){
@@ -141,15 +141,15 @@ Action[Type.REVEAL_INITIAL_ORDERS] = {
 Action[Type.SELECT_ORDERS] = {
     secret: true,
     create: function(playerId, orderArray){
-        return function(){
+        return new function(){
             var value = { id: playerId, orders: orderArray };
-            this.prototype.serialize = function(){
+            this.serialize = function(){
                 return { type: Type.SELECT_ORDERS, value: value };
             };
-            this.prototype.addDummyOrder = function(dummyOrder) {
+            this.addDummyOrder = function(dummyOrder) {
                 value.dummyOrder = dummyOrder;
             };
-        }
+        };
     },
 
     deserialize: function(data){
@@ -160,16 +160,16 @@ Action[Type.SELECT_ORDERS] = {
 Action[Type.ASSIGN_DUMMY_ORDERS] = {
     serverOnly: true,
     create: function(playerId, dummyOrdersArray){
-        return function(){
-            this.prototype.serialize = function(){
+        return new function(){
+            this.serialize = function(){
                 return { type: Type.ASSIGN_DUMMY_ORDERS, value: { id: playerId, orders: dummyOrdersArray }};
             };
-        }
+        };
     },
 
     deserialize: function(data){
-        return function(){
-            this.prototype.getHeldDummyOrders = function(playerId) {
+        return new function(){
+            this.getHeldDummyOrders = function(playerId) {
                 if (!playerId) {
                     return data.value.orders;
                 } else {
@@ -180,30 +180,30 @@ Action[Type.ASSIGN_DUMMY_ORDERS] = {
                     return orders.orders;
                 }
             }
-        }
+        };
     }
 };
 
 Action[Type.REVEAL_NEW_ROUND_DATA] = {
     create: function(){
-        return function(){
+        return new function(){
             var value = {};
-            this.prototype.serialize = function(){
+            this.serialize = function(){
                 return { type: Type.REVEAL_NEW_ROUND_DATA, value: value };
             };
-            this.prototype.newMonsters = function(monster1, monster2, monster3) {
+            this.newMonsters = function(monster1, monster2, monster3) {
                 value.monsters = [monster1, monster2, monster3];
             };
-            this.prototype.newRooms = function(room1, room2) {
+            this.newRooms = function(room1, room2) {
                 value.rooms = [room1, room2];
             };
-            this.prototype.newAdventurers = function(adventurer1, adventurer2, adventurer3, adventurer4) {
+            this.newAdventurers = function(adventurer1, adventurer2, adventurer3, adventurer4) {
                 value.adventurers = [adventurer1, adventurer2, adventurer3, adventurer4];
             };
-            this.prototype.newEvent = function(event) {
+            this.newEvent = function(event) {
                 value.event = event;
-            }
-        }
+            };
+        };
     },
 
     deserialize: function(data){
@@ -217,11 +217,11 @@ module.exports = Action;
 Sample action definition:
 Action[Type.SELECT_ORDERS] = {
     create: function(){
-        return function(){
-            this.prototype.serialize = function(){
+        return new function(){
+            this.serialize = function(){
 
             };
-        }
+        };
     },
 
     deserialize: function(data){

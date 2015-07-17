@@ -28,7 +28,7 @@ module.exports = React.createClass({
         };
     },
     componentWillMount: function(){
-        this.getFlux().actions.newGame.load();
+        this.getFlux().actions.users.getAll();
         this.validate();
     },
 
@@ -121,6 +121,6 @@ module.exports = React.createClass({
 
     onSubmit: function(e) {
         e.preventDefault();
-        this.getFlux().actions.newGame.start(_.clone(this.state));
+        this.getFlux().actions.game.newGame(_.clone(this.state));
     }
 });

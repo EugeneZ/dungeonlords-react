@@ -49,6 +49,6 @@ module.exports = fluxxor.createStore(protectedStore({
     },
 
     loadInitial: function() {
-        this.loggedInUser = domUtils.getInitialData('loggedInUser');
+        this.loggedInUser = DungeonLords ? DungeonLords.loggedInUser : null;
     }
 }));

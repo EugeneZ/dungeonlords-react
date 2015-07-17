@@ -11,8 +11,8 @@ var stores = {
 };
 
 var actions = {
-    newGame: require('./action/newGame'),
-    game: require('./action/game')
+    game: require('./action/game'),
+    users: require('./action/users')
 };
 
 var flux = new Flux(stores, actions);
