@@ -1,8 +1,7 @@
 'use strict';
 
 var fluxxor = require('fluxxor'),
-    protectedStore = require('fluxxor-protected-store'),
-    domUtils = require('../util/domUtils');
+    protectedStore = require('fluxxor-protected-store');
 
 module.exports = fluxxor.createStore(protectedStore({
     public: {
