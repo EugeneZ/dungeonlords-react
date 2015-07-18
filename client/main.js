@@ -5,7 +5,8 @@ var React = require('react'),
 
 var stores = {
     Users: new (require('./store/Users')),
-    Game: new (require('./store/Game'))
+    Game: new (require('./store/Game')),
+    Games: new (require('./store/Games'))
 };
 
 var actions = {

@@ -1,12 +1,8 @@
 var rest = require('rest'),
     mime = require('rest/interceptor/mime'),
+    _    = require('lodash'),
     client = rest.wrap(mime, { mime: 'application/json' }),
     path = '/api/v1/';
-
-var ref = function(id) {
-    if (!id) { return null; }
-    return { _id: id };
-};
 
 module.exports = {
     Users: {
@@ -27,10 +23,12 @@ module.exports = {
             return client({ path: path + 'Games/' + id }).then(function(response) { return response.entity; });
         },
         post: function(data) {
-            // expecting data.title, data.player1, data.player2, etc, but need model-like syntax
-            var entity = {};
+            var entity = {},
+                mapper = function(input){
+                    return input && { _id: input._id, id: input._id, name: input.name };
+                };
             entity.title = data.title;
-            entity.players = [ref(data.player1), ref(data.player2), ref(data.player3), ref(data.player4)];
+            entity.players = _.compact([mapper(data.player1), mapper(data.player2), mapper(data.player3), mapper(data.player4)]);
             return client({ path: path + 'Games', method: 'POST', entity: entity }).then(function(response){ return response.entity });
         }
     }

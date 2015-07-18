@@ -4,12 +4,6 @@ var _ = require('lodash'),
 
 module.exports = {
 
-    // checks if the server needs to make moves on game start up.
-    newGameSetup: function(gameDoc) {
-        game = new Game(gameDoc, [], null, null, { isServer: true });
-        makeServerMovesFn(game, gameDoc, null, null, function(){});
-    },
-
     // checks to see if the server needs to make some moves when someone joins a game. This is the only way to unstick stuck games
     joinGameSetup: function(gid, uid, fcb) {
         getGame(gid, uid, function(game, gameDoc){
@@ -47,7 +41,7 @@ function getGame(gid, uid, cb, fcb) {
                 return fcb(err);
             }
 
-            cb(new Game(gameDoc, gameActionDocs, uid), gameDoc);
+            cb(new Game(gameDoc, gameActionDocs, uid, null, { isServer: true }), gameDoc);
         });
     });
 }

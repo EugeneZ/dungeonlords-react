@@ -19,7 +19,7 @@ module.exports = function(io) {
 
         // join the appropriate games/rooms
         socket.on('JoinGame', function(data){
-            if (socket.request.user.games.indexOf(data.game) === -1){
+            if (!_.find(socket.request.user.games, function(game){ return game.id = data.game })){
                 console.log('Unauthorized join room: ' + data.game);
                 return socket.emit('Error', new Error('Unauthorized game requested'));
             } else {

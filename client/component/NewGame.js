@@ -13,14 +13,14 @@ module.exports = React.createClass({
             users: usersStore.getUsers(),
             usersLoading : usersStore.isLoading(),
             title: user ? user.name + '\'s Game' : '',
-            player1: user ? user._id : -1
+            player1: user
         };
     },
     getInitialState: function(){
         return {
-            player2: -2,
-            player3: -3,
-            player4: -4,
+            player2: null,
+            player3: null,
+            player4: null,
             error: false,
             dirty: false
         };
@@ -50,8 +50,8 @@ module.exports = React.createClass({
                         </div>
                         {this.renderPlayerSelect(1)}
                         {this.renderPlayerSelect(2)}
-                        {parseInt(this.state.player2) !== -2 ? this.renderPlayerSelect(3) : null}
-                        {parseInt(this.state.player3) !== -3 ? this.renderPlayerSelect(4) : null}
+                        {this.state.player2 !== null ? this.renderPlayerSelect(3) : null}
+                        {this.state.player3 !== null ? this.renderPlayerSelect(4) : null}
                         <div className="form-group">
                             <div className="col-sm-6 col-sm-offset-4">
                                 <button type="submit" className="btn btn-primary" disabled={this.state.error}>
@@ -70,12 +70,14 @@ module.exports = React.createClass({
             return <option key={user._id} value={user._id}>{user.name}</option>;
         });
 
+        var id = 'player' + i;
+
         return (
             <div className="form-group">
-                <label className="control-label col-sm-4" htmlFor={'player' + i}>{i > 2 ? 'Optional ' : ''}Player {'#' + i}</label>
+                <label className="control-label col-sm-4" htmlFor={id}>{i > 2 ? 'Optional ' : ''}Player {'#' + i}</label>
                 <div className="col-sm-6">
-                    <select className="form-control" id={'player' + i} value={this.state['player' + i]} onChange={this.onChangePlayer.bind(this, i)}>
-                        <option key="-1" value={-(i)}>Select Player</option>
+                    <select className="form-control" id={id} value={this.state[id] ? this.state[id].id : 0} onChange={this.onChangePlayer.bind(this, i)}>
+                        <option key="-1" value={0}>Select Player</option>
                         {users}
                     </select>
                 </div>
@@ -88,19 +90,24 @@ module.exports = React.createClass({
             return this.setState({ error: 'You must enter a title' });
         }
 
-        if (parseInt(this.state.player1) === -1) {
+        if (!this.state.player1) {
             return this.setState({ error: 'Player #1 is required' });
         }
 
-        if (parseInt(this.state.player2) === -2) {
+        if (!this.state.player2) {
             return this.setState({ error: 'Player #2 is required' });
         }
 
+        var realPlayers = 0;
         var duplicates = _.uniq([1,2,3,4].map(function(i){
-            return this.state['player' + i];
-        }.bind(this))).length !== 4;
+            var player = this.state['player' + i];
+            if (player) {
+                realPlayers++;
+            }
+            return player;
+        }.bind(this)));
 
-        if (duplicates) {
+        if (_.compact(duplicates).length !== realPlayers) {
             return this.setState({ error: 'All players must be different' });
         }
 
@@ -113,7 +120,7 @@ module.exports = React.createClass({
 
     onChangePlayer: function(i, e) {
         var state = { dirty: true };
-        state['player' + i] = e.target.value;
+        state['player' + i] = _.find(this.state.users, {_id: e.target.value});
         this.setState(state, this.validate);
     },
 

@@ -1,20 +1,25 @@
 var api = require('../api'),
-    router = require('../router');
+    router = require('../router'),
+    _ = require('lodash');
 
 module.exports = {
     newGame: function(data) {
-        this.dispatch('NEW_GAME');
-
-        if (data.player3 === -3){
-            delete data.player3;
+        var creationStub = {
+            title: data.title,
+            player1: data.player1,
+            player2: data.player2
+        };
+        if (data.player3) {
+            creationStub.player3 = data.player3;
+        }
+        if (data.player4) {
+            creationStub.player4 = data.player4;
         }
 
-        if (data.player4 === -4) {
-            delete data.player4;
-        }
+        this.dispatch('NEW_GAME', creationStub);
 
-        api.Games.post(data).then(function(response) {
-            this.dispatch('NEW_GAME_SUCCESS', response);
+        api.Games.post(creationStub).then(function(response) {
+            this.dispatch('NEW_GAME_SUCCESS', { creationStub: creationStub, doc: response });
             if (response && response._id) {
                 router.transitionTo('game', { id: response._id});
             }

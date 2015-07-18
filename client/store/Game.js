@@ -49,7 +49,7 @@ module.exports = fluxxor.createStore(protectedStore({
         return {
             NEW_GAME_SUCCESS: this.newGame,
             NEW_GAME_FAILURE: this.newGameFailed,
-            GAME_SUCCESS: this.newGame,
+            GAME_SUCCESS: this.joinGame,
             GAME_FAILURE: this.newGameFailed,
             MAKE_MOVE: this.makeMove,
             UNDO: this.undo,
@@ -57,10 +57,14 @@ module.exports = fluxxor.createStore(protectedStore({
         };
     },
 
-    newGame: function(game) {
+    newGame: function(data) {
+        this.joinGame(data.doc);
+    },
+
+    joinGame: function(gameDoc) {
         this.loading = false;
         this.errors = [];
-        this.game = game;
+        this.game = gameDoc;
 
         io.emit('JoinGame', { game: this.game._id });
 

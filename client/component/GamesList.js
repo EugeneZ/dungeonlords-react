@@ -5,23 +5,29 @@ var React = require('react'),
     NewGame = require('./NewGame');
 
 module.exports = React.createClass({
-    mixins: [FluxMixin],
-    getInitialState: function(){
-        var userStore = this.getFlux().store('Users');
+    mixins: [FluxMixin, StoreWatchMixin('Games')],
+    getStateFromFlux: function(){
+        var gamesStore = this.getFlux().store('Games');
 
         return {
-            me: userStore.getLoggedInUser()
+            games: gamesStore.getMyGames()
         };
     },
     render: function () {
-        if (!this.state.me.games || !this.state.me.games.length) {
+        if (!this.state.games || !this.state.games.length) {
             return <NewGame/>
         }
 
-        var games = this.state.me.games.map(function(game){
+        var games = this.state.games.map(function(game){
             return (
                 <tr>
-                    <td><Link to={'/game/' + game}>{game}</Link></td>
+                    <td><Link to={'/game/' + game._id}>{game.title}</Link> <small>{game._id}</small></td>
+                    <td>{game.lastPlayed}</td>
+                    <td>
+                        {game.players.map(function(player){
+                            return <p>{player.name}</p>;
+                        })}
+                    </td>
                 </tr>
             );
         });
@@ -31,6 +37,13 @@ module.exports = React.createClass({
                 <div className="col-sm-12">
                     <h2>Games</h2>
                     <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Last Move</th>
+                                <th>Players</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             {games}
                         </tbody>

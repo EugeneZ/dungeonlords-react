@@ -14,9 +14,13 @@ var GameSchema = new Schema({
         required: true
     },
     players: [{
-        user: {
-            type: Schema.ObjectId,
-            ref: 'User'
+        id: {
+            type: String,
+            required: true
+        },
+        name: {
+            type: String,
+            required: true
         }
     }],
     created: {

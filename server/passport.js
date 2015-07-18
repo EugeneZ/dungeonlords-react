@@ -15,11 +15,11 @@ var passportConfig = function(passport, config) {
     // Deserialize the user object based on a pre-serialized token
     // which is the user id
     passport.deserializeUser(function(id, done) {
-        User.findOne({
-            _id: id
-        }, '-salt -hashed_password', function(err, user) {
-            done(err, user);
-        });
+        User.findOne({ _id: id }, '-salt -hashed_password')
+            .populate('games')
+            .exec(function(err, user) {
+                done(err, user);
+            });
     });
 
     // Use twitter strategy
