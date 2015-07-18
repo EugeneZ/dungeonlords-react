@@ -1,5 +1,3 @@
-'use strict';
-
 var fluxxor = require('fluxxor'),
     protectedStore = require('fluxxor-protected-store'),
     _ = require('lodash'),

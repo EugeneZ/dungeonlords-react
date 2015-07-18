@@ -1,5 +1,3 @@
-'user strict';
-
 var React = require('react'),
     _ = require('lodash');
 

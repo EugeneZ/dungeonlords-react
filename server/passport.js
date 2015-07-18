@@ -1,5 +1,3 @@
-'use strict';
-
 var mongoose = require('mongoose'),
     //TwitterStrategy = require('passport-twitter').Strategy,
     //FacebookStrategy = require('passport-facebook').Strategy,

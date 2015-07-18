@@ -1,5 +1,3 @@
-'use strict';
-
 var React = require('react'),
     FluxMixin = require('fluxxor').FluxMixin(React),
     RouteHandler = require('react-router').RouteHandler;

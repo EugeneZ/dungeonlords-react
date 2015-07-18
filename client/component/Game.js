@@ -1,5 +1,3 @@
-'use strict';
-
 var _ = require('lodash'),
     React = require('react'),
     FluxMixin = require('fluxxor').FluxMixin(React),

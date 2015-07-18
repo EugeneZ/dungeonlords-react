@@ -1,5 +1,3 @@
-'use strict';
-
 var _ = require('lodash'),
     mongoose = require('mongoose'),
     Schema = mongoose.Schema;
