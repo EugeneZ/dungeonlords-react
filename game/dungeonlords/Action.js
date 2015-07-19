@@ -59,7 +59,7 @@ Action[Type.ASSIGN_INITIAL_ORDERS] = {
                 return { type: Type.ASSIGN_INITIAL_ORDERS, value: value };
             };
             this.addPlayer = function(id, orderArray) {
-                value.push({ id: id, orders: value });
+                value.push({ id: id, orders: orderArray });
             };
             this.addDummyPlayer = function(orderArray, associatedPlayerId) {
                 value.push({ id: associatedPlayerId, dummy: true, orders: orderArray });

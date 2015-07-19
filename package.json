@@ -25,7 +25,7 @@
     "fluxxor-protected-store": "git://github.com/EugeneZ/fluxxor-protected-store#b7f0e6f6a3511de97beea64fe0d94d2db2f737dd",
     "less-middleware": "1.0.x",
     "lodash": "^3.3.0",
-    "mongoose": "^3.8.21",
+    "mongoose": "^4.0.7",
     "morgan": "~1.5.1",
     "node-lessify": "0.0.8",
     "passport": "^0.2.1",

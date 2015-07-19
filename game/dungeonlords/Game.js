@@ -56,6 +56,13 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
         makePlayerMove(data);
     };
 
+    this.pushActions = function(actionsArray){
+        if (actionsArray.length) {
+            actions = actions.concat(actionsArray);
+            play();
+        }
+    };
+
     this.isLegal = function(move){
         return true;
     };
@@ -101,9 +108,9 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
      * @returns {Object|Array} The filtered action(s) from the database.
      */
     var getActions = function (type, options) {
-        var filteredActions = [];
+        var filteredActions = [], options = options || {};
         for (var i = actionIndex; i < actions.length; i++) {
-            if (actions[i].type === type) {
+            if (actions[i].action === type) {
                 filteredActions.push(Action[type].deserialize(actions[i]));
                 actionIndex = i + 1;
                 if (options.one) {
