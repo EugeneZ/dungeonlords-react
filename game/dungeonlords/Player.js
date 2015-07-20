@@ -29,7 +29,8 @@ var Player = function(name, id){
     this.getName = function() { return name; };
 
     var waiting = false;
-    this.isWaiting = function() { waiting = true; };
+    this.isWaiting = function() { return waiting; };
+    this.setWaiting = function() { waiting = true; };
 
     var directive;
     this.getDirective = function() { return directive; };

@@ -11,14 +11,14 @@ module.exports = React.createClass({
     mixins: [FluxMixin, StoreWatchMixin('Game', 'Users')],
 
     getStateFromFlux: function() {
-        var gameStore = this.getFlux().store('Game'),
-            userStore = this.getFlux().store('Users');
+        var gameStore = this.getFlux().store('Game');
 
         return {
             game: gameStore.getGame(),
             gameLoading: gameStore.isLoading(),
             log: gameStore.getLog(),
-            logic: gameStore.getLogic()
+            directive: gameStore.getGame() ? gameStore.getGame().getPlayerDirective().component : null,
+            props: gameStore.getGame() ? gameStore.getGame().getPlayerDirective().props : null
         }
     },
 
@@ -37,53 +37,15 @@ module.exports = React.createClass({
         return (
             <div className="row">
                 <div className="col-sm-12">
-                    <h2>{this.state.game.title} <small>{this.state.game._id}</small></h2>
+                    <h2>{this.state.game.getTitle()} <small>{this.state.game.getId()}</small></h2>
 
-
-
-                    {this.renderLogic()}
+                    {React.createElement(this.state.directive, this.state.props)}
 
                     <h4>Game Log</h4>
                     <ol>
                         {this.state.log.map(function(log, i){ return <li key={i}>{log}</li>; })}
                     </ol>
                 </div>
-            </div>
-        );
-    },
-
-    renderLogic: function(){
-        if (!this.state.logic) {
-            return '';
-        }
-
-        var boards = this.state.logic.players.map(function(player){
-            return (
-                <div>
-                    <ul className="list-group">
-                        <li className="list-group-item active">
-                            {player._id}
-                        </li>
-                        <li className="list-group-item">
-                            <span className="badge">{player.gold}</span>
-                            Gold
-                        </li>
-                        <li className="list-group-item">
-                            <span className="badge">{player.food}</span>
-                            Food
-                        </li>
-                        <li className="list-group-item">
-                            <span className="badge">{player.imps}</span>
-                            Imps
-                        </li>
-                    </ul>
-                </div>
-            );
-        });
-
-        return (
-            <div>
-            {boards}
             </div>
         );
     }

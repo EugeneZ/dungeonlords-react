@@ -25,7 +25,12 @@ module.exports = function(io) {
             } else {
                 socket.join(data.game);
                 socket.emit('JoinGameSuccess', { status: true });
-                DLServer.joinGameSetup(data.game, socket.request.user._id, function(err){
+                console.log('Emitting JoinGameSuccess');
+                DLServer.joinGameSetup(data.game, socket.request.user._id, function(actionOrActions){
+                    console.log('Emitting GameAction on join');
+                    io.to(data.game).emit('GameAction', actionOrActions);
+                }, function(err){
+                    console.log('Emitting Error: ', err);
                     socket.emit('Error', err);
                 });
             }
@@ -36,8 +41,10 @@ module.exports = function(io) {
             ensureAuthorized(socket, data.game);
 
             DLServer.getMoves(data.game, function(actions){
+                console.log('Emitting GameActions');
                 socket.emit('GameActions', actions);
             }, function(err){
+                console.log('Emitting GameAction');
                 socket.emit('Error', err);
             });
         });
@@ -47,12 +54,14 @@ module.exports = function(io) {
             ensureAuthorized(socket, data.game);
             DLServer.move(data.game, socket.request.user._id, data.value, function(actionOrActions){
                 if ('length' in actionOrActions) {
+                    console.log('Emitting GameActions after move');
                     io.to(data.game).emit('GameActions', actionOrActions);
                 } else {
+                    console.log('Emitting GameAction after move');
                     io.to(data.game).emit('GameAction', actionOrActions);
                 }
             }, function(err){
-                socket.emit('Error', err);
+                socket.emit('Error', new Error(err));
             });
         });
 

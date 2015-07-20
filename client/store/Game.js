@@ -2,7 +2,7 @@ var fluxxor = require('fluxxor'),
     protectedStore = require('fluxxor-protected-store'),
     _ = require('lodash'),
     io = require('../socket'),
-    Game = require('../../game/dungeonlords/Game'); // Loading a server component! Re-using logic core for server/clientside;
+    Game = require('../../game/dungeonlords/Game');
 
 module.exports = fluxxor.createStore(protectedStore({
     public: {
@@ -13,34 +13,33 @@ module.exports = fluxxor.createStore(protectedStore({
             return this.game || null;
         },
         getLog: function() {
-            if (!this.logic) {
+            if (!this.game) {
                 return [];
             } else {
-                return this.logic.getLog();
+                return this.game.getLog();
             }
-        },
-        getLogic: function(){
-            return this.logic || null;
         }
     },
 
     initialize: function () {
         this.game = null;
-        this.actions = [];
         this.loading = false;
         this.errors = [];
 
         io.on('JoinGameSuccess', function(){
-            io.emit('GetGameActions', { game: this.game._id });
+            console.info('Received JoinGameSuccess, emitting GetGameActions:', this.game.getId());
+            io.emit('GetGameActions', { game: this.game.getId() });
         }.bind(this));
 
         io.on('GameActions', function(data){
+            console.info('Received GameActions:', data);
             this.loadActions(data);
             this.emit('change');
         }.bind(this));
 
         io.on('GameAction', function(action){
-            this.loadActions(action);
+            console.info('Received GameAction:', action);
+            this.loadAction(action);
             this.emit('change');
         }.bind(this));
     },
@@ -50,10 +49,7 @@ module.exports = fluxxor.createStore(protectedStore({
             NEW_GAME_SUCCESS: this.newGame,
             NEW_GAME_FAILURE: this.newGameFailed,
             GAME_SUCCESS: this.joinGame,
-            GAME_FAILURE: this.newGameFailed,
-            MAKE_MOVE: this.makeMove,
-            UNDO: this.undo,
-            ORDER: this.orderClicked
+            GAME_FAILURE: this.newGameFailed
         };
     },
 
@@ -64,9 +60,10 @@ module.exports = fluxxor.createStore(protectedStore({
     joinGame: function(gameDoc) {
         this.loading = false;
         this.errors = [];
-        this.game = gameDoc;
+        this.game = new Game(gameDoc, [], this.flux.store('Users').getLoggedInUser()._id, this.makeMove.bind(this), { skipPlay: true });
 
-        io.emit('JoinGame', { game: this.game._id });
+        console.info('Emitting JoinGame:', this.game.getId());
+        io.emit('JoinGame', { game: this.game.getId() });
 
         this.emit('change');
     },
@@ -78,29 +75,16 @@ module.exports = fluxxor.createStore(protectedStore({
         this.emit('change');
     },
 
-    loadActions: function(actionOrActions) {
-        var user = this.flux.store('Users').getLoggedInUser();
-        if (actionOrActions.length) {
-            this.actions = actionOrActions;
-        } else {
-            this.actions.push(actionOrActions);
-        }
-        this.logic = new Game(this.game, this.actions, user.id); // TODO: making a new game every time can be expensive
+    loadActions: function(actions) {
+        this.game.pushActions(actions);
     },
 
-    makeMove: function() {
-        if (this.move === Game.Move.SELECT_INITIAL_ORDERS) {
-            this.logic.setValueForMove(this.order);
-        } else if (this.move === Game.Move.SELECT_ORDERS) {
-            this.logic.setValueForMove(_.compact(this.orders.concat(this.selectedDummyOrder)));
-        }
+    loadAction: function(action) {
+        this.game.pushActions([action]);
+    },
 
-        io.emit('PostGameAction', {
-            game: this.game._id,
-            value: this.logic.getValueForMove()
-        });
-
-        this.move = Game.Move.WAITING_FOR_OTHERS;
-        this.emit('change');
+    makeMove: function(action) {
+        console.info('Emitting PostGameAction:', action);
+        io.emit('PostGameAction', { game: this.game.getId(), value: action });
     }
 }));

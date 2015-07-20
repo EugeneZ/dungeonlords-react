@@ -1,10 +1,7 @@
 var React = require('react'),
-    FluxMixin = require('fluxxor').FluxMixin(React),
-    StoreWatchMixin = require('fluxxor').StoreWatchMixin,
     Icon = require('../../../client/component/Icon');
 
 module.exports = React.createClass({
-    mixins: [FluxMixin],
     render: function () {
         var text, icon, size = '2x';
         if (this.props.order === 1) {
@@ -52,7 +49,7 @@ module.exports = React.createClass({
         }
 
         return (
-            <div className={className + (this.props.active ? ' active' : '')} onClick={this.onClick.bind(this, order)}>
+            <div className={'order ' + (this.props.active ? ' active' : '')} onClick={this.onClick.bind(this, this.props.order)}>
                 {icon}
                 <span>{text}</span>
                 {ordinal}

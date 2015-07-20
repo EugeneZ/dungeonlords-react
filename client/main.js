@@ -3,6 +3,8 @@ var React = require('react'),
     _ = require('lodash'),
     router = require('./router');
 
+require('console-shim');
+
 var stores = {
     Users: new (require('./store/Users')),
     Game: new (require('./store/Game')),

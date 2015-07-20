@@ -1,11 +1,8 @@
 var React = require('react'),
-    FluxMixin = require('fluxxor').FluxMixin(React),
-    StoreWatchMixin = require('fluxxor').StoreWatchMixin,
-    OrderCard = require('./OrderCard');
+    OrderCard = require('./OrderCard'),
+    PlayerBoards = require('./PlayerBoards');
 
 module.exports = React.createClass({
-    mixins: [FluxMixin],
-
     propTypes: {
         mode: React.PropTypes.oneOf(['standard', 'initial', 'dummy']).isRequired, // Determines how many orders the player can choose, and the text in the instructions.
         orders: React.PropTypes.arrayOf(React.PropTypes.number).isRequired,
@@ -37,22 +34,25 @@ module.exports = React.createClass({
         }
 
         return (
-            <div className={'panel panel-' + this.state.completed ? 'success' : 'primary'}>
-                <div className="panel-heading">{instructions}</div>
-                <div className="panel-body">
-                    <div className="selection">
-                        <div className="orders">
-                            {this.props.orders.map(function(order){
-                                var index = this.state.picked.indexOf(order);
-                                return (
-                                    <OrderCard order={order} active={index !== -1} index={index} onClick={this.onClickOrder}/>
-                                );
-                            }.bind(this))}
+            <div>
+                <div className={'panel panel-' + this.state.completed ? 'success' : 'primary'}>
+                    <div className="panel-heading">{instructions}</div>
+                    <div className="panel-body">
+                        <div className="selection">
+                            <div className="orders">
+                                {this.props.orders.map(function(order){
+                                    var index = this.state.picked.indexOf(order);
+                                    return (
+                                        <OrderCard order={order} active={index !== -1} index={index} onClick={this.onClickOrder}/>
+                                    );
+                                }.bind(this))}
+                            </div>
+                            <button className="btn btn-danger" onClick={this.onClickUndo} disabled={!this.state.picked.length}>Undo</button>
+                            <button className="btn btn-success" onClick={this.onClickOkay} disabled={!this.state.completed}>Okay</button>
                         </div>
-                        <button className="btn btn-danger" onClick={this.onClickUndo} disabled={!this.state.picked.length}>Undo</button>
-                        <button className="btn btn-success" onClick={this.onClickOkay} disabled={!this.state.completed}>Okay</button>
                     </div>
                 </div>
+                <PlayerBoards players={this.props.players} currentPlayer={this.props.currentPlayer}/>
             </div>
         );
     },
@@ -88,5 +88,5 @@ module.exports = React.createClass({
     onClickOkay: function(e){
         e.preventDefault();
         this.props.onSubmit(this.state.picked);
-    },
+    }
 });

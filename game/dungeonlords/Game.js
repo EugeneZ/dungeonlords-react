@@ -1,11 +1,20 @@
 var _ = require('lodash'),
     Action = require('./Action'),
     Player = require('./Player'),
-    MathUtil = require('../MathUtil'),
+    MathUtil = require('../MathUtil');
+
+    /*
+    These are React components that we don't want to load on the server side because they are used for player display. We could use a function to save us some boilerplate
+    code, but that would defeat browserify's ability to inline these components. So we don't do that.
+    */
+var PlayerBoardsComponent = typeof window !== 'undefined' ? require('./component/PlayerBoards') : null,
     PickOrdersComponent = typeof window !== 'undefined' ? require('./component/PickOrders') : null;
 
-var Game = function(gameDoc, actionDocs, playerId, server, options) {
-    options = options || {};
+var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
+    options = options || {
+            isServer: false,             // If set to true, certain routines that are only useful for players are skipped, and vice-versa
+            skipPlay: false              // If set to true, skips running the play() method. Useful to avoid pointless calculations when you are about to call pushActions()
+        };
 
     //
     // PRIVATE MEMBER DECLARATIONS //
@@ -20,6 +29,22 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
 
     //
     // PUBLIC METHOD DECLARATIONS //
+    /**
+     * Gets the game id.
+     * @returns {String} id
+     */
+    this.getId = function(){
+        return gameDoc._id;
+    };
+
+    /**
+     * Gets the game title.
+     * @returns {String} title
+     */
+    this.getTitle = function(){
+        return gameDoc.title;
+    };
+
     /**
      * getLog
      * Fetches the array of log messages.
@@ -40,26 +65,17 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
 
     /**
      * getPlayerDirective
-     * Returns the instructions for the player.
+     * Returns the React component and props for the player.
      * @returns {Array}
      */
     this.getPlayerDirective = function(){
         return thisPlayer.getDirective();
     };
 
-    /**
-     * makePlayerMove
-     * Records a move for the active player
-     * @param data
-     */
-    this.makePlayerMove = function(data){
-        makePlayerMove(data);
-    };
-
     this.pushActions = function(actionsArray){
         if (actionsArray.length) {
             actions = actions.concat(actionsArray);
-            play();
+            initialize();
         }
     };
 
@@ -94,11 +110,11 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
     };
 
     /**
-     * Records a move for the active player
-     * @param data
+     * Records a move action for the active player
+     * @param action
      */
-    var makePlayerMove = function(data) {
-
+    var makePlayerMove = function(action) {
+        remotePush(action.serialize());
     };
 
     /**
@@ -130,6 +146,13 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
         if (!options.isServer) {
             logs.push(message + (arr ? arr.join(', ') : ''));
         }
+    };
+
+    var mixinCommonProps = function(props) {
+        return _.mixin({
+            players: players,
+            currentPlayer: thisPlayer
+        }, props || {});
     };
 
     /**
@@ -178,15 +201,17 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
         if (heldOrdersActions.length !== players.length) {
             players.forEach(function(player){
                 if (_.find(heldOrdersActions, { id: player.getId() })) {
-                    player.isWaiting();
+                    player.setWaiting();
                 } else {
                     player.setDirective({
                         component: PickOrdersComponent,
-                        props: {
+                        props: mixinCommonProps({
                             mode: 'initial',
                             orders: initialOrders.getInitialOrders(player.getId()),
-                            onSubmit: makePlayerMove.bind(this)
-                        }
+                            onSubmit: function(orders) {
+                                makePlayerMove(Action[Action.Type.SELECT_INITIAL_ORDERS].create(thisPlayer.getId(), orders));
+                            }
+                        })
                     });
                 }
             }.bind(this));
@@ -249,19 +274,35 @@ var Game = function(gameDoc, actionDocs, playerId, server, options) {
 
     //
     // INITIALIZATION -- Start here! //
+    var initialize = function(){
+
+        actionIndex = 0;
+        serverMoves = [];
+        logs = [];
+        players = [];
+        round = 0;
+
+        for (var i = 0; i < gameDoc.players.length; i++) {
+            var playerHolder = new Player('name', gameDoc.players[i].id);
+            if (playerId === gameDoc.players[i].id) {
+                thisPlayer = playerHolder;
+                playerHolder.setDirective({ component: PlayerBoardsComponent, props: mixinCommonProps()});
+            }
+            players.push(playerHolder);
+        }
+
+        if (!options.skipPlay) {
+            play();
+        } else {
+            options.skipPlay = false;
+        }
+    };
+
     actions = actionDocs.sort(function (a, b) {
         return Date.parse(a.created) - Date.parse(b.created);
     });
 
-    for (var i = 0; i < gameDoc.players.length; i++) {
-        var playerHolder = new Player('name', gameDoc.players[i].id);
-        if (playerId === gameDoc.players[i].id) {
-            thisPlayer = playerHolder;
-        }
-        players.push(playerHolder);
-    }
-
-    play();
+    initialize();
 };
 
 /*var dummyOrderResolver = function(){
