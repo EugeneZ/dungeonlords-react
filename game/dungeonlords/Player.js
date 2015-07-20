@@ -163,7 +163,7 @@ var Player = function(playerDoc){
 
     // The line outside of your door. Index 0 represents the space closest to the door.
     var adventurers = [];
-    this.getPrisoners = function(){ return Immutable.fromJS(adventurers); };
+    this.getAdventurers = function(){ return Immutable.fromJS(adventurers); };
     this.assignAdventurer = function(adventurer) {
         if (adventurers.indexOf(adventurer) !== -1) {
             return false;
@@ -173,15 +173,25 @@ var Player = function(playerDoc){
         return true;
     };
 
+    // Paladin stuff
+    var hasPaladin = false;
+    this.hasPaladin = function(){ return hasPaladin; };
+    this.setPaladin = function(bool){ hasPaladin = bool; };
+
     // How many -3 point marks you have on your account. These are the red cubes in the upper right of the board
     var deadLetters = 0;
+    this.countDeadLetters = function(){ return deadLetters; };
     this.gainDeadLetter = function(){
         return !!deadLetters++;
     };
 
     var heldOrders = [];
     this.getHeldOrders = function(){ return Immutable.fromJS(heldOrders); };
-    this.setHeldOrders = function(orders) { heldOrders = orders; }
+    this.setHeldOrders = function(orders) { heldOrders = orders; };
+
+    var orders = [];
+    this.getOrders = function(){ return Immutable.fromJS(orders); };
+    this.setOrders = function(orderArray){ orders = orderArray; };
 };
 
 module.exports = Player;
