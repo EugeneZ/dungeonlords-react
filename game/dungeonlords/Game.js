@@ -159,7 +159,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
      * Assigns player order and shuffles/deals initial orders (and initially held orders for dummy players)
      */
     var pickStartingPlayerAndInitialOrders = function () {
-        log('The Ministry of Dungeons welcomes you to a trial for your dungeon lord license. Have fun! Let the evil flow.');
+        log('The Ministry of Dungeons welcomes you to a trial for your dungeon lord license. Have fun!');
 
         // Determine player order
         var playerOrder = getActions(Action.Type.ASSIGN_PLAYER_ORDER, {one: true});
@@ -174,7 +174,10 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             playerOrder = _.shuffle(playerIds);
             makeServerMove(Action[Action.Type.ASSIGN_PLAYER_ORDER].create(playerOrder));
         }
-        log('The Ministry has randomly determined that the player order shall be: ', playerOrder);
+        log('The Ministry has randomly determined that the player order shall be: ',
+            playerOrder.map(function(playerId){
+                return _.find(players, function(player){ return player.getId() === playerId; }).getName();
+            }));
 
         // Determine the three actions you draw at the beginning of the game, to pick two held orders
         var initialOrders = getActions(Action.Type.ASSIGN_INITIAL_ORDERS, {one: true});
@@ -283,7 +286,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
         round = 0;
 
         for (var i = 0; i < gameDoc.players.length; i++) {
-            var playerHolder = new Player('name', gameDoc.players[i].id);
+            var playerHolder = new Player(gameDoc.players[i]);
             if (playerId === gameDoc.players[i].id) {
                 thisPlayer = playerHolder;
                 playerHolder.setDirective({ component: PlayerBoardsComponent, props: mixinCommonProps()});

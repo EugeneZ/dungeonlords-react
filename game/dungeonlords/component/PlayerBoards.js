@@ -2,8 +2,16 @@ var React = require('react'),
     Icon = require('../../../client/component/Icon');
 
 module.exports = React.createClass({
+
+    getInitialState: function(){
+        return {
+            active: this.props.currentPlayer
+        };
+    },
+
     render: function () {
-        var waiting = null;
+        var waiting = null,
+            player = this.state.active;
 
         if (this.props.currentPlayer.isWaiting()) {
             waiting = (
@@ -13,8 +21,18 @@ module.exports = React.createClass({
             );
         }
 
-        var boards = this.props.players.map(function(player){
-            return (
+        return (
+            <div>
+                {waiting}
+                <ul className="nav nav-tabs">
+                    {this.props.players.map(function(player){
+                        return (
+                            <li role="presentation" className={this.state.active.getId() === player.getId() ? 'active' : ''}>
+                                <a href="#" onClick={this.onClickTab.bind(this, player)}>{player.getName()}</a>
+                            </li>
+                        );
+                    }.bind(this))}
+                </ul>
                 <div>
                     <ul className="list-group">
                         <li className="list-group-item active">
@@ -34,14 +52,13 @@ module.exports = React.createClass({
                         </li>
                     </ul>
                 </div>
-            );
-        });
-
-        return (
-            <div>
-                {waiting}
-                {boards}
             </div>
         );
+    },
+
+    onClickTab: function(player, e) {
+        e.preventDefault();
+        this.setState({ active: player });
     }
+
 });

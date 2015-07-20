@@ -24,9 +24,9 @@ var generateAdjuster = function(name, isLoser, min, max){
     }.bind(this);
 };
 
-var Player = function(name, id){
-    this.getId = function() { return id; };
-    this.getName = function() { return name; };
+var Player = function(playerDoc){
+    this.getId = function() { return playerDoc.id; };
+    this.getName = function() { return playerDoc.name; };
 
     var waiting = false;
     this.isWaiting = function() { return waiting; };
