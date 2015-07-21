@@ -27,7 +27,7 @@ module.exports = React.createClass({
 
         if (this.props.mode === 'initial') {
             instructions = 'Pick a card that you will keep. The other two will become your first set of inaccessible orders.';
-        } else if (this.props.mode === 'dummy') {
+        } else if (this.props.mode === 'dummy' && this.state.picked.length >= 3) {
             instructions = 'Pick your dummy player\'s third order.';
         } else {
             instructions = 'Pick orders for your minions.';
@@ -35,7 +35,7 @@ module.exports = React.createClass({
 
         return (
             <div>
-                <div className={'panel panel-' + this.state.completed ? 'success' : 'primary'}>
+                <div className={'panel panel-' + (this.state.completed ? 'success' : 'primary')}>
                     <div className="panel-heading">{instructions}</div>
                     <div className="panel-body">
                         <div className="selection">
@@ -59,14 +59,14 @@ module.exports = React.createClass({
 
     onClickOrder: function(e, order){
         e.preventDefault();
-        if (this.props.mode === 'initial' || this.props.mode === 'dummy') {
+        if (this.props.mode === 'initial') {
             this.setState({
                 picked: [order],
                 completed: true
             });
-        } else if (this.state.picked.length >= 2) {
+        } else if ((this.state.picked.length >= 2 && this.props.mode !== 'dummy') || (this.state.picked.length >= 3 && this.props.mode === 'dummy')) {
             this.setState({
-                picked: [this.state.picked[0], this.state.picked[1], order],
+                picked: this.state.picked.slice(0, this.props.mode === 'dummy' ? 3 : 2).concat(order),
                 completed: true
             });
         } else {

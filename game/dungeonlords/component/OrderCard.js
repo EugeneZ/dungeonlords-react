@@ -45,6 +45,9 @@ module.exports = React.createClass({
                 case 2:
                     ordinal = <p>3rd</p>;
                     break;
+                case 4:
+                    ordinal = <p>Dummy</p>;
+                    break;
             }
         }
 

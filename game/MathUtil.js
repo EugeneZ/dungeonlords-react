@@ -12,7 +12,23 @@ var GameMath = {
         return rands;
     },
 
-    pullFromDeck: function(length, min, max) {
+    pullFromDeck: function(length, min, max, excluded) {
+        var deck = [];
+        for (var i = min; i <= max; i++) {
+            if (excluded.indexOf(i) === -1) {
+                deck.push(i);
+            }
+        }
+        deck = _.shuffle(deck);
+        return deck.slice(0, length);
+    },
+
+    getFullDeck: function(min, max) {
+        var deck = [];
+        for (var i = min; i <= max; i++) {
+            deck.push(i);
+        }
+        return deck;
     }
 };
 

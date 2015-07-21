@@ -54,6 +54,11 @@ var Player = function(playerDoc){
     this.gainImps = generateAdjuster.call('imps');
     this.loseImps = generateAdjuster.call('imps', true);
 
+    var usedImps = 0;
+    this.getUsedImps = function() { return usedImps; };
+    this.useImps = function(number) { usedImps += number };
+    this.bringImpsHome = function() { usedImps = 0; };
+
     var food = 3;
     this.getFood = function() { return food; };
     this.checkFood = function() { return food != 0; };
@@ -191,7 +196,11 @@ var Player = function(playerDoc){
 
     var orders = [];
     this.getOrders = function(){ return Immutable.fromJS(orders); };
-    this.setOrders = function(orderArray){ orders = orderArray; };
+    this.setOrders = function(orderArray){ orders = orderArray; heldMinion = false; };
+
+    var heldMinion = false;
+    this.isMinionHeld = function(){ return heldMinion; }
+    this.setMinionHeld = function(){ heldMinion = value; }
 };
 
 module.exports = Player;

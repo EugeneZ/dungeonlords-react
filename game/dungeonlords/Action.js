@@ -25,7 +25,8 @@ var Type = Action.Type = {
     ASSIGN_INITIAL_ORDERS: 20,
     ASSIGN_DUMMY_ORDERS: 21,
     REVEAL_NEW_ROUND_DATA: 22,
-    REVEAL_INITIAL_ORDERS: 23
+    REVEAL_INITIAL_ORDERS: 23,
+    REVEAL_ORDERS: 24
 };
 
 /**
@@ -159,11 +160,15 @@ Action[Type.SELECT_ORDERS] = {
 
 Action[Type.ASSIGN_DUMMY_ORDERS] = {
     serverOnly: true,
-    create: function(playerId, dummyOrdersArray){
+    create: function(){
         return new function(){
+            var value = [];
             this.serialize = function(){
-                return { type: Type.ASSIGN_DUMMY_ORDERS, value: { id: playerId, orders: dummyOrdersArray }};
+                return { type: Type.ASSIGN_DUMMY_ORDERS, value: value};
             };
+            this.addDummyOrders = function(playerId, dummyOrdersArray) {
+                value.push({ id: playerId, orders: dummyOrdersArray });
+            }
         };
     },
 
@@ -171,7 +176,7 @@ Action[Type.ASSIGN_DUMMY_ORDERS] = {
         return new function(){
             this.getHeldDummyOrders = function(playerId) {
                 if (!playerId) {
-                    return data.value.orders;
+                    return data.value[0].orders;
                 } else {
                     var orders = _.find(data.value, {id: playerId});
                     if (!orders) {
@@ -202,6 +207,60 @@ Action[Type.REVEAL_NEW_ROUND_DATA] = {
             };
             this.newEvent = function(event) {
                 value.event = event;
+            };
+        };
+    },
+
+    deserialize: function(data){
+        return data.value;
+    }
+};
+
+Action[Type.REVEAL_ORDERS] = {
+    create: function(){
+        return new function(){
+            var value = [];
+            this.serialize = function(){
+                return { type: Type.REVEAL_ORDERS, value: value };
+            };
+            this.addPlayerOrders = function(playerId, orderArray) {
+                var p = _.find(value, { id: playerId });
+                if (p) {
+                    p.id = playerId;
+                    p.orders = orderArray;
+                } else {
+                    value.push({id: playerId, orders: orderArray});
+                }
+            };
+            this.addPlayerDummyOrder = function(playerId, order) {
+                var p = _.find(value, { id: playerId });
+                if (p) {
+                    p.id = playerId;
+                    p.dummyOrder = order;
+                } else {
+                    value.push({id: playerId, dummyOrder: order});
+                }
+            };
+        };
+    },
+
+    deserialize: function(data){
+        return new function() {
+            this.getPlayerOrders = function(playerId) {
+                return _.find(data.value, { id: playerId }).orders;
+            };
+            this.getPlayerDummyOrder = function(playerId) {
+                return _.find(data.value, { id: playerId }).dummyOrder;
+            }
+        };
+    }
+};
+
+Action[Type.CONFIRM_ACTION] = {
+    create: function(playerId, year, round, order, value){
+        return new function(){
+            this.serialize = function(){
+                return { type: Type.CONFIRM_ACTION, value: { id: playerId, year: year, round: round, order: order, value: value } };
             };
         };
     },
