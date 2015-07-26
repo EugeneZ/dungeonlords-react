@@ -417,15 +417,27 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
 
         // Execute orders based on placed minions
         var confirmedActions = _.filter(getActions(Action.Type.CONFIRM_ACTION, { all: true }), { year: year, round: round }),
-            confirmedAction;
+            confirmedAction,
+            playersWithActionsToTake = [];
         for (var area = 0; area < 8; area++) {
             for (var placement = 0; placement < 4; placement++) {
                 var playerId = areas[area][placement];
-                if (playerId && playerId !== true) {
+                if (playerId && playerId !== true && playersWithActionsToTake.indexOf(playerId) === -1) {
                     confirmedAction = _.find(confirmedActions, { id: playerId, order: area + 1 });
-                    executeOrder(playerId, confirmedAction, area + 1, placement);
+                    if (!executeOrder(playerId, confirmedAction, area + 1, placement)) {
+                        playersWithActionsToTake.push(playerId);
+                    }
                 }
             }
+        }
+
+        if (playersWithActionsToTake.length) {
+            players.forEach(function (player) {
+                if (playersWithActionsToTake.indexOf(player.getId()) === -1) {
+                    player.setWaiting();
+                }
+            });
+            return false;
         }
 
         return true;
@@ -434,23 +446,25 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
     var executeOrder = function(playerId, confirmedAction, order, placement){
         var player = _.find(players, function(player){ return player.getId() === playerId });
         if (!confirmedAction) {
-            if (!player.checkCost()){
+            if (!player.checkCost(Area[order][placement].input, tilesOnOffer)){
                 makeServerMove(Action[Action.Type.CONFIRM_ACTION].create(playerId, year, round, order, false));
-                return;
+            } else {
+                players.forEach(function (player) {
+                    if (player.getId() === playerId) {
+                        player.setDirective({
+                            component: ConfirmOrderComponent,
+                            props: mixinCommonProps({
+                                order: order,
+                                placement: placement
+                            }),
+                            onSubmit: function (value) {
+                                makePlayerMove(Action[Action.Type.CONFIRM_ACTION].create(playerId, year, round, order, value));
+                            }
+                        });
+                    }
+                });
             }
-            players.forEach(function (player) {
-                if (player.getId() === playerId) {
-                    player.setDirective({
-                        component: ConfirmOrderComponent,
-                        props: mixinCommonProps({
-                            order: order,
-                            placement: placement
-                        })
-                    });
-                } else {
-                    player.setWaiting();
-                }
-            });
+            return false;
         } else if (confirmedAction.value) {
             var execute = Area[order][placement];
             if (confirmedAction.value.paid) {
@@ -469,6 +483,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
         } else {
             player.setMinionHeld();
         }
+        return true;
     };
 
     var productionPhase = function(){

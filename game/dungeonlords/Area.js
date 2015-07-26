@@ -84,7 +84,8 @@ Area[Type.DIG_TUNNELS] = {
     2: {
         input: {
             imps: 5,
-            emptyDungeonSpaces: 4
+            emptyDungeonSpaces: 4,
+            foreman: true
         },
         output: {
             tunnels: 4
@@ -96,7 +97,7 @@ Area[Type.MINE_GOLD] = {
     0: {
         input: {
             imps: 2,
-            minableRooms: 2
+            minableTiles: 2
         },
         output: {
             gold: 2
@@ -105,7 +106,7 @@ Area[Type.MINE_GOLD] = {
     1: {
         input: {
             imps: 3,
-            minableRooms: 3
+            minableTiles: 3
         },
         output: {
             gold: 3
@@ -114,7 +115,8 @@ Area[Type.MINE_GOLD] = {
     2: {
         input: {
             imps: 5,
-            minableRooms: 4
+            minableTiles: 4,
+            foreman: true
         },
         output: {
             gold: 4
@@ -205,18 +207,25 @@ Area[Type.HIRE_MONSTER] = {
 Area[Type.BUILD_ROOM] = {
     0: {
         input: {
-            roomAvailable: true
+            roomAvailable: true,
+            legalRoomSpaces: true
         },
         output: {
             room: 1
         }
     },
     1: {
+        input: {
+            legalRoomSpaces: true
+        },
         output: {
             room: 1
         }
     },
     2: {
+        input: {
+            legalRoomSpaces: true
+        },
         output: {
             room: 1
         }

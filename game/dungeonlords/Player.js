@@ -1,6 +1,7 @@
-var DungeonTile = require('./DungeonTile');
-var Monster = require('./Monster');
-var Immutable = require('immutable');
+var DungeonTile = require('./DungeonTile'),
+    Monster     = require('./Monster'),
+    Area        = require('./Area'),
+    Immutable   = require('immutable');
 
 var generateAdjuster = function(name, isLoser, min, max){
     min = parseInt(min, 10) || 0;
@@ -153,6 +154,82 @@ var Player = function(playerDoc){
             return true;
         }
     };
+    this.getBuildableSpaces = function(dungeon, forRooms){
+        var spaces = [],
+            isAdjacentToDungeon = false,
+            isLegalToBuildTunnel = false,
+            isLegalToBuildroom = false,
+            adjacentTiles;
+        for (var column in dungeon) {
+            for (var row in dungeon[column]) {
+                if (!dungeon[column][row] || (forRooms && dungeon[column][row] === 1)) {
+                    isAdjacentToDungeon = false;
+                    isLegalToBuildTunnel = true;
+                    isLegalToBuildroom = true;
+                    adjacentTiles = { above: false, aboveRight: false, right: false, belowRight: false, below: false, belowLeft: false, left: false, aboveLeft: false };
+                    if (row > 0 && dungeon[column][row - 1]) {
+                        adjacentTiles.above = dungeon[column][row - 1];
+                    }
+                    if (row > 0 && column < 4 && dungeon[column + 1][row - 1]) {
+                        adjacentTiles.aboveRight = dungeon[column + 1][row - 1];
+                    }
+                    if (column < 4 && dungeon[column + 1][row]) {
+                        adjacentTiles.right = dungeon[column + 1][row];
+                    }
+                    if (row < 3 && column < 4 && dungeon[column + 1][row + 1]) {
+                        adjacentTiles.belowRight = dungeon[column + 1][row + 1];
+                    }
+                    if (row < 3 && dungeon[column][row + 1]) {
+                        adjacentTiles.below = dungeon[column][row + 1];
+                    }
+                    if (row < 3 && column > 0 && dungeon[column - 1][row + 1]) {
+                        adjacentTiles.belowLeft = dungeon[column - 1][row + 1];
+                    }
+                    if (column > 0 && dungeon[column - 1][row]) {
+                        adjacentTiles.right = dungeon[column - 1][row];
+                    }
+                    if (row > 0 && column > 0 && dungeon[column - 1][row - 1]) {
+                        adjacentTiles.aboveLeft = dungeon[column - 1][row - 1];
+                    }
+
+                    if (forRooms) {
+                        ['above', 'right', 'below', 'left'].forEach(function(location){
+                            if (adjacentTiles[location] && adjacentTiles[location] >= 3) {
+                                isLegalToBuildroom = false;
+                            }
+                        });
+
+                        if (isLegalToBuildroom) {
+                            spaces.push({column: column, row: row});
+                        }
+
+                    } else {
+                        if (adjacentTiles.above || adjacentTiles.right || adjacentTiles.below || adjacentTiles.left) {
+                            isAdjacentToDungeon = true;
+                        }
+                        if (adjacentTiles.above && adjacentTiles.right && adjacentTiles.aboveRight) {
+                            isLegalToBuildTunnel = false;
+                        }
+                        if (adjacentTiles.right && adjacentTiles.below && adjacentTiles.belowRight) {
+                            isLegalToBuildTunnel = false;
+                        }
+                        if (adjacentTiles.left && adjacentTiles.below && adjacentTiles.belowLeft) {
+                            isLegalToBuildTunnel = false;
+                        }
+                        if (adjacentTiles.left && adjacentTiles.above && adjacentTiles.aboveLeft) {
+                            isLegalToBuildTunnel = false;
+                        }
+
+                        if (isLegalToBuildTunnel && isAdjacentToDungeon) {
+                            spaces.push({column: column, row: row});
+                        }
+                    }
+                }
+            }
+        }
+
+        return spaces;
+    };
 
     // The collection of your prison, used for points/trophies at the end
     var prison = [];
@@ -199,8 +276,60 @@ var Player = function(playerDoc){
     this.setOrders = function(orderArray){ orders = orderArray; heldMinion = false; };
 
     var heldMinion = false;
-    this.isMinionHeld = function(){ return heldMinion; }
-    this.setMinionHeld = function(){ heldMinion = value; }
+    this.isMinionHeld = function(){ return heldMinion; };
+    this.setMinionHeld = function(){ heldMinion = value; };
+
+    this.checkCost = function(input, tilesOnOffer){
+        if (!input) {
+            return true;
+        }
+        var soFarSoGood = true;
+        for (var item in input) {
+            if (item === 'gold'){
+                 soFarSoGood = gold >= input[item];
+            } else if (item === 'evil') {
+                soFarSoGood = evil + input[item] <= 15;
+            } else if (item === 'imps') {
+                soFarSoGood = imps - usedImps >= (input['foreman'] ? 2 : 1);
+            } else if (item === 'food') {
+                soFarSoGood = food - input[item] >= 0;
+            } else if (item === 'gold') {
+                soFarSoGood = gold - input[item] >= 0;
+            } else if (item === 'trap') {
+                soFarSoGood = traps.length !== 0;
+            } else if (item === 'monster') {
+                soFarSoGood = monsters.length !== 0;
+            } else if (item === 'emptyDungeonSpaces') {
+                soFarSoGood = this.getBuildableSpaces(dungeon).length > 0;
+            } else if (item === 'legalRoomSpaces') {
+                soFarSoGood = this.getBuildableSpaces(dungeon, true).length > 0;
+            } else if (item === 'minableTiles') {
+                soFarSoGood = false;
+                for (var column in dungeon) {
+                    for (var row in dungeon) {
+                        if (dungeon[column][row] && dungeon[column][row] != 2 && dungeon[column][row] != 3) {
+                            soFarSoGood = true;
+                        }
+                    }
+                }
+            } else if (item === 'roomAvailable') {
+                soFarSoGood = tilesOnOffer.rooms.length !== 0;
+            } else if (item === 'payday') {
+                soFarSoGood = false;
+                tilesOnOffer.monsters.forEach(function(monster){
+                    if (this.checkCost(Monster[monster].cost)) {
+                        soFarSoGood = true;
+                    }
+                }.bind(this));
+            }
+
+            if (!soFarSoGood) {
+                return false;
+            }
+        }
+    }
 };
+
+
 
 module.exports = Player;
