@@ -420,12 +420,14 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             confirmedAction,
             playersWithActionsToTake = [];
         for (var area = 0; area < 8; area++) {
-            for (var placement = 0; placement < 4; placement++) {
+            var backwardsMode = area === 7 || area === 8;
+            for (var placement = backwardsMode ? 3 : 0; backwardsMode ? placement >= 0 : placement <= 3; backwardsMode ? placement-- : placement++) {
                 var playerId = areas[area][placement];
                 if (playerId && playerId !== true && playersWithActionsToTake.indexOf(playerId) === -1) {
                     confirmedAction = _.find(confirmedActions, { id: playerId, order: area + 1 });
                     if (!executeOrder(playerId, confirmedAction, area + 1, placement)) {
                         playersWithActionsToTake.push(playerId);
+                        break;
                     }
                 }
             }
