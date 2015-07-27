@@ -99,8 +99,8 @@ DungeonTile[Enum.WORKSHOP] = {
         trap: 1
     },
     columns: [0,1,2,3,4],
-    rows: [0,3],
-    alsoLegal: [[0,1],[0,2],[4,1],[4,2]]
+    rows: [0,1,2,3],
+    illegal: [[1,1],[1,2],[2,1],[2,2],[3,1],[3,2]]
 };
 
 DungeonTile[Enum.TOOL_SHED] = {
@@ -112,7 +112,7 @@ DungeonTile[Enum.TOOL_SHED] = {
     },
     columns: [0,1,2,3,4],
     rows: [0,3],
-    alsoLegal: [[0,1],[0,2],[4,1],[4,2]]
+    illegal: [[1,1],[1,2],[2,1],[2,2],[3,1],[3,2]]
 };
 
 DungeonTile[Enum.PRINTING_PRESS] = {

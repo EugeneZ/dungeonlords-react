@@ -1,6 +1,7 @@
 var DungeonTile = require('./DungeonTile'),
     Monster     = require('./Monster'),
     Area        = require('./Area'),
+    Room        = require('./DungeonTile'),
     Immutable   = require('immutable');
 
 var generateAdjuster = function(name, isLoser, min, max){
@@ -199,6 +200,26 @@ var Player = function(playerDoc){
                             }
                         });
 
+                        // check actual room rules
+                        forRooms.forEach(function(room){
+                            if (room >= 12) {
+                                return;
+                            }
+                            if (room < 4) {
+                                throw new Error('Value passed to room checker that isn\'t an actual room');
+                            }
+                            if (DungeonTile[room].columns.indexOf(column) === -1 || DungeonTile[room].rows.indexOf(row) === -1) {
+                                isLegalToBuildroom = false;
+                            }
+                            if (DungeonTile[room].illegal) {
+                                DungeonTile[room].illegal.forEach(function(illegal){
+                                    if (illegal[0] === column && illegal[1] === row){
+                                        isLegalToBuildroom = false;
+                                    }
+                                });
+                            }
+                        });
+
                         if (isLegalToBuildroom) {
                             spaces.push({column: column, row: row});
                         }
@@ -302,7 +323,7 @@ var Player = function(playerDoc){
             } else if (item === 'emptyDungeonSpaces') {
                 soFarSoGood = this.getBuildableSpaces(dungeon).length > 0;
             } else if (item === 'legalRoomSpaces') {
-                soFarSoGood = this.getBuildableSpaces(dungeon, true).length > 0;
+                soFarSoGood = this.getBuildableSpaces(dungeon, tilesOnOffer).length > 0;
             } else if (item === 'minableTiles') {
                 soFarSoGood = false;
                 for (var column in dungeon) {
