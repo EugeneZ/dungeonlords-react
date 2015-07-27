@@ -334,11 +334,13 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             log('Randomly selected dummy orders have been selected.');
         }
 
+        log('Time to select orders for your minions!' + (players.length === 2 ? '...And for the dummy player as well.' : ''));
         var selectOrders = getActions(Action.Type.SELECT_ORDERS);
         if (selectOrders.length !== players.length) {
             players.forEach(function(player){
                 if (_.find(selectOrders, { id: player.getId() })) {
                     player.setWaiting();
+                    log(player.getName() + ' is done selecting orders.');
                 } else {
                     player.setDirective({
                         component: PickOrdersComponent,
@@ -375,6 +377,8 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
                 i ? dummyPlayer1Orders.push(dummyOrder) : dummyPlayer2Orders.push(dummyOrder);
             }
         });
+
+        log('Orders have been picked and revealed! Time to execute them.');
 
         // Place minions -- the areas is an array if length 8, one for each area that a minion can be sent to. The indexes match the order cards if you subtract 1 from the order.
         // Each area is also an array with length 4, in placement order, with the value being null (nothing), playerId (the player took that order), or boolean true (dummy holding this spot).
@@ -437,6 +441,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             players.forEach(function (player) {
                 if (playersWithActionsToTake.indexOf(player.getId()) === -1) {
                     player.setWaiting();
+                    log(player.getName() + ' is done executing orders.');
                 }
             });
             return false;
@@ -469,8 +474,8 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             return false;
         } else if (confirmedAction.value) {
             var execute = Area[order][placement];
-            if (confirmedAction.value.paid) {
-                for (var medium in confirmedAction.value.paid) {
+            if ([1, 2].indexOf(order) !== -1) {
+                for (var medium in execute.input) {
                     if (medium === 'gold') {
                         player.loseGold(execute.input[medium]);
                     } else if (medium === 'food') {
@@ -483,7 +488,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
                 }
             }
         } else {
-            player.setMinionHeld();
+            player.setMinionHeld(order);
         }
         return true;
     };

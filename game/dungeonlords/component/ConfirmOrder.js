@@ -11,7 +11,7 @@ module.exports = React.createClass({
             needDecision: !noActionNecessary,
             completed: noActionNecessary,
             dirty: false,
-            value: null
+            value: noActionNecessary ? true : null // If there's no action needed, we set the value to true because it will be sent back to the game logic and a false value looks like a skip
         }
     },
 
