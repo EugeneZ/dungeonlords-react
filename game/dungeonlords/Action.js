@@ -126,7 +126,7 @@ Action[Type.REVEAL_INITIAL_ORDERS] = {
         };
     },
 
-    deserialize: function(){
+    deserialize: function(data){
         return {
             getRevealedInitialOrders: function(playerId) {
                 var player = _.find(data.value, { id: playerId });

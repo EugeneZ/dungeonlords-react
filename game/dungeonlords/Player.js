@@ -296,9 +296,11 @@ var Player = function(playerDoc){
     this.getOrders = function(){ return Immutable.fromJS(orders); };
     this.setOrders = function(orderArray){ orders = orderArray; heldMinion = false; };
 
-    var heldMinion = false;
-    this.isMinionHeld = function(){ return heldMinion; };
-    this.setMinionHeld = function(){ heldMinion = value; };
+    var heldMinion = [];
+    this.isMinionHeld = function(){ return !!heldMinion.length; };
+    this.setMinionHeld = function(order){ heldMinion.push(order); };
+
+    var seenEventCards = [];
 
     this.checkCost = function(input, tilesOnOffer){
         if (!input) {
@@ -346,6 +348,66 @@ var Player = function(playerDoc){
 
             if (!soFarSoGood) {
                 return false;
+            }
+        }
+    };
+    
+    this.payCost = function(input, value){
+        for (var item in input) {
+            if (item === 'gold') {
+                this.loseGold(input[item]);
+            } else if (item === 'food') {
+                this.loseFood(input[item]);
+            } else if (item === 'imps') {
+                this.useImps(typeof value.length ? value.length : value); // when using imps, the player chooses the number (up to the maximum)
+                if (input.foreman) {
+                    this.useImps(1);
+                }
+            } else if (item === 'evil') {
+                if (input[item] > 0) {
+                    this.gainEvil(input[item]);
+                } else {
+                    this.loseEvil(input[item] * -1);
+                }
+            } else if (item === 'payday') {
+                this.payCost(Monster[value.monster].cost, value);
+            } else if (item === 'trap') {
+                traps = traps.slice(0,1); // TODO: Player should have a choice! Right now we're just paying the first trap they have....
+            } else if (item === 'monster') {
+                var index = monsters.indexOf(value.sacrifice);
+                monsters = monsters.slice(index, index + 1);
+            }
+        }
+    };
+
+    this.gainStuff = function(input, value){
+        for (var item in input) {
+            if (item === 'gold') {
+                this.gainGold(input[item]);
+            } else if (item === 'goldUpTo') {
+                this.gainGold(value);
+            } else if (item === 'food') {
+                this.gainFood(input[item]);
+            } else if (item === 'imps') {
+                this.gainImps(input[item]);
+            } else if (item === 'evil') {
+                if (input[item] > 0) {
+                    this.gainEvil(input[item]);
+                } else {
+                    this.loseEvil(input[item] * -1);
+                }
+            } else if (item === 'peek') {
+                seenEventCards[0] = 1; // TODO: We need to figure out how/when to generate this value, right now the players are seeing fake event cards
+            } else if (item === 'traps') {
+                traps.push(1); // TODO: We need to figure out how/when to generate this value, right now the players are getting the first trap card
+            } else if (item === 'monster') {
+                monsters.push(value.monster);
+            } else if (item === 'tunnels') {
+                value.forEach(function(location){
+                    dungeon[location.column][location.row] = 1;
+                });
+            } else if (item === 'room') {
+                dungeon[value.location.column][value.location.row] = value.room;
             }
         }
     }

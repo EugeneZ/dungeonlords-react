@@ -186,13 +186,14 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             }
             playerOrder = _.shuffle(playerIds);
             makeServerMove(Action[Action.Type.ASSIGN_PLAYER_ORDER].create(playerOrder));
+        } else {
+            log('The Ministry has randomly determined that the player order shall be: ',
+                playerOrderAction.map(function(playerId){
+                    var player = _.find(players, function(player){ return player.getId() === playerId; });
+                    playerOrder.push(player);
+                    return player.getName();
+                }));
         }
-        log('The Ministry has randomly determined that the player order shall be: ',
-            playerOrderAction.map(function(playerId){
-                var player = _.find(players, function(player){ return player.getId() === playerId; });
-                playerOrder.push(player);
-                return player.getName();
-            }));
 
         // Determine the three actions you draw at the beginning of the game, to pick two held orders
         var initialOrders = getActions(Action.Type.ASSIGN_INITIAL_ORDERS, {one: true});
@@ -473,22 +474,12 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             }
             return false;
         } else if (confirmedAction.value) {
-            var execute = Area[order][placement];
-            if ([1, 2].indexOf(order) !== -1) {
-                for (var medium in execute.input) {
-                    if (medium === 'gold') {
-                        player.loseGold(execute.input[medium]);
-                    } else if (medium === 'food') {
-                        player.loseFood(execute.input[medium]);
-                    } else if (medium === 'imps') {
-                        player.useImps(execute.input[medium]);
-                    } else if (medium === 'evil'){
-                        player.gainEvil(execute.input[medium]);
-                    }
-                }
-            }
+            player.payCost(Area[order][placement].input, confirmedAction.value);
+            player.gainStuff(Area[order][placement].output, confirmedAction.value);
+            log(player.getName() + ' executed order #' + order + '.'); // TODO: Be more specfic
         } else {
             player.setMinionHeld(order);
+            log(player.getName() + ' skipped an order.'); // TODO: Be more specific
         }
         return true;
     };

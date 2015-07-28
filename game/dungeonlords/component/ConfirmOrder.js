@@ -166,7 +166,9 @@ module.exports = React.createClass({
             if (this.props.placement === 2 && i === 0) {
                 return;
             }
-            buttons.push(<button className="btn btn-info" onClick={this.onClickSendImpsToMine.bind(this, i+1)} disabled={this.state.value === i+1}>Mine gold using {i+1} imps</button>);
+            buttons.push(<button className="btn btn-info"
+                                 onClick={this.onClickSendImpsToMine.bind(this, this.props.placement === 2 ? i : i + 1)} // foreman uses up an extra imp. i starts at 0 so we add 1
+                                 disabled={this.state.value === i+1}>Mine gold using {i+1} imps</button>);
         }.bind(this));
 
         return buttons;

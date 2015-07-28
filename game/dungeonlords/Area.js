@@ -100,7 +100,7 @@ Area[Type.MINE_GOLD] = {
             minableTiles: 2
         },
         output: {
-            gold: 2
+            goldUpTo: 2
         }
     },
     1: {
@@ -109,7 +109,7 @@ Area[Type.MINE_GOLD] = {
             minableTiles: 3
         },
         output: {
-            gold: 3
+            goldUpTo: 3
         }
     },
     2: {
@@ -119,7 +119,7 @@ Area[Type.MINE_GOLD] = {
             foreman: true
         },
         output: {
-            gold: 4
+            goldUpTo: 4
         }
     }
 };
