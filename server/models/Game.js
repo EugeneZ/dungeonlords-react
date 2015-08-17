@@ -64,13 +64,6 @@ GameSchema.pre('save', function(next) {
 });
 
 /**
- * Post-save hook
- */
-GameSchema.post('save', function(game) {
-    //GameServer.newGameSetup(game);
-});
-
-/**
  * Statics
  */
 GameSchema.statics.get = function(id, cb) {

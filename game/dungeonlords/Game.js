@@ -2,6 +2,7 @@ var _ = require('lodash'),
     Action = require('./Action'),
     Player = require('./Player'),
     Area   = require('./Area'),
+    DungeonTile = require('./DungeonTile'),
     MathUtil = require('../MathUtil');
 
     /*
@@ -29,6 +30,8 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
         playerOrder = [],
         round = 0,
         year = 1,
+        dummyPlayer1HeldOrders = [],
+        dummyPlayer2HeldOrders = [],
         dummyPlayer1Orders = [],
         dummyPlayer2Orders = [],
         tilesOnOffer;
@@ -215,10 +218,10 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             return false;
         }
         if (players.length === 3) {
-            dummyPlayer1Orders = initialOrders.getHeldDummyOrders();
+            dummyPlayer1HeldOrders = initialOrders.getHeldDummyOrders();
         } else if (players.length === 2) {
-            dummyPlayer1Orders = initialOrders.getHeldDummyOrders(players[0].getId());
-            dummyPlayer2Orders = initialOrders.getHeldDummyOrders(players[1].getId());
+            dummyPlayer1HeldOrders = initialOrders.getHeldDummyOrders(players[0].getId());
+            dummyPlayer2HeldOrders = initialOrders.getHeldDummyOrders(players[1].getId());
         }
 
         log('Initial orders have been given to all players.');
@@ -255,8 +258,8 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
         }
 
         players.forEach(function(player){
-            player.setHeldOrders(revealHeldOrdersAction.getRevealedInitialOrders(player.getId()));
-            log(player.getName() + ' chose to have the following orders inaccessible:', player.getHeldOrders());
+            player.setHeldOrders(_.difference(initialOrders.getInitialOrders(player.getId()), revealHeldOrdersAction.getRevealedInitialOrders(player.getId())));
+            log(player.getName() + ' chose to have the following orders inaccessible:', player.getHeldOrders().toJS());
         });
 
         return true;
@@ -264,7 +267,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
 
     var newRoundPhase = function(){
         var revealedData = getActions(Action.Type.REVEAL_NEW_ROUND_DATA, { all: true });
-        if (revealedData.length < round + (year - 1 ? 0 : 4)) {
+        if (revealedData.length < round + (year - 1 ? 4 : 0)) {
             var newRevealedData = Action[Action.Type.REVEAL_NEW_ROUND_DATA].create(),
                 usedMonsters = [],
                 usedRooms = [],
@@ -283,9 +286,9 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             });
 
             var newMonsters = MathUtil.pullFromDeck(3, 1, 12, usedMonsters);
-            newRevealedData.newMonsters(newMonsters[0], newMonsters[1], newMonsters[3]);
+            newRevealedData.newMonsters(newMonsters[0], newMonsters[1], newMonsters[2]);
 
-            var newRooms = MathUtil.pullFromDeck(2, 1, 8, usedRooms);
+            var newRooms = MathUtil.pullFromSet(2, year === 1 ? DungeonTile.YearOne : DungeonTile.YearTwo, usedRooms);
             newRevealedData.newRooms(newRooms[0], newRooms[1]);
 
             if (round != 4) {
@@ -313,10 +316,10 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
             if (!assignedDummyOrders) {
                 var newDummyOrders = Action[Action.Type.ASSIGN_DUMMY_ORDERS].create();
                 if (players.length === 3) {
-                    newDummyOrders.addDummyOrders(null, MathUtil.pullFromDeck(3, 1, 8, dummyPlayer1Orders));
+                    newDummyOrders.addDummyOrders(null, MathUtil.pullFromDeck(3, 1, 8, dummyPlayer1HeldOrders));
                 } else {
                     players.forEach(function(player, i){
-                        newDummyOrders.addDummyOrders(player.getId(), MathUtil.pullFromDeck(2, 1, 8, i ? dummyPlayer1Orders : dummyPlayer2Orders));
+                        newDummyOrders.addDummyOrders(player.getId(), MathUtil.pullFromDeck(2, 1, 8, i ? dummyPlayer1HeldOrders : dummyPlayer2HeldOrders));
                     });
                 }
                 makeServerMove(newDummyOrders);
@@ -338,7 +341,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
         log('Time to select orders for your minions!' + (players.length === 2 ? '...And for the dummy player as well.' : ''));
         var selectOrders = getActions(Action.Type.SELECT_ORDERS);
         if (selectOrders.length !== players.length) {
-            players.forEach(function(player){
+            players.forEach(function(player, i){
                 if (_.find(selectOrders, { id: player.getId() })) {
                     player.setWaiting();
                     log(player.getName() + ' is done selecting orders.');
@@ -346,9 +349,15 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
                     player.setDirective({
                         component: PickOrdersComponent,
                         props: mixinCommonProps({
-                            orders: _.difference(MathUtil.getFullDeck(1,8), player.getHeldOrders()),
-                            onSubmit: function(orders) {
-                                makePlayerMove(Action[Action.Type.SELECT_ORDERS].create(thisPlayer.getId(), orders));
+                            mode: players.length === 2 ? 'dummy' : 'standard',
+                            orders: _.difference(MathUtil.getFullDeck(1,8), player.getHeldOrders().toJS()),
+                            dummyOrders: _.difference(MathUtil.getFullDeck(1,8), i === 0 ? dummyPlayer1Orders.concat(dummyPlayer1HeldOrders) : dummyPlayer2Orders.concat(dummyPlayer2HeldOrders)),
+                            onSubmit: function(orders, dummyOrder) {
+                                var action = Action[Action.Type.SELECT_ORDERS].create(thisPlayer.getId(), orders);
+                                if (dummyOrder) {
+                                    action.addDummyOrder(dummyOrder);
+                                }
+                                makePlayerMove(action);
                             }
                         })
                     });
@@ -415,7 +424,7 @@ var Game = function(gameDoc, actionDocs, playerId, remotePush, options) {
         }
         for(var i = 0; i < 3; i++) {
             playerOrder.forEach(function (player) {
-                var order = player.getOrders()[i];
+                var order = player.getOrders().toJS()[i];
                 areas[order - 1][nextFreeArea(order)] = player.getId();
             });
         }

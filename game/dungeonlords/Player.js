@@ -161,8 +161,8 @@ var Player = function(playerDoc){
             isLegalToBuildTunnel = false,
             isLegalToBuildroom = false,
             adjacentTiles;
-        for (var column in dungeon) {
-            for (var row in dungeon[column]) {
+        for (var column = 0; column <= 4; column++) {
+            for (var row = 0; row <= 3; row++) {
                 if (!dungeon[column][row] || (forRooms && dungeon[column][row] === 1)) {
                     isAdjacentToDungeon = false;
                     isLegalToBuildTunnel = true;
@@ -294,7 +294,7 @@ var Player = function(playerDoc){
 
     var orders = [];
     this.getOrders = function(){ return Immutable.fromJS(orders); };
-    this.setOrders = function(orderArray){ orders = orderArray; heldMinion = false; };
+    this.setOrders = function(orderArray){ orders = orderArray; heldMinion = []; };
 
     var heldMinion = [];
     this.isMinionHeld = function(){ return !!heldMinion.length; };
@@ -325,7 +325,7 @@ var Player = function(playerDoc){
             } else if (item === 'emptyDungeonSpaces') {
                 soFarSoGood = this.getBuildableSpaces(dungeon).length > 0;
             } else if (item === 'legalRoomSpaces') {
-                soFarSoGood = this.getBuildableSpaces(dungeon, tilesOnOffer).length > 0;
+                soFarSoGood = this.getBuildableSpaces(dungeon, tilesOnOffer.rooms).length > 0;
             } else if (item === 'minableTiles') {
                 soFarSoGood = false;
                 for (var column in dungeon) {

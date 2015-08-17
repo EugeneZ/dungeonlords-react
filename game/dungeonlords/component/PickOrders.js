@@ -6,6 +6,7 @@ module.exports = React.createClass({
     propTypes: {
         mode: React.PropTypes.oneOf(['standard', 'initial', 'dummy']).isRequired, // Determines how many orders the player can choose, and the text in the instructions.
         orders: React.PropTypes.arrayOf(React.PropTypes.number).isRequired,
+        dummyOrders: React.PropTypes.arrayOf(React.PropTypes.number),
         onSubmit: React.PropTypes.func.isRequired
     },
 
@@ -23,12 +24,14 @@ module.exports = React.createClass({
     },
 
     render: function () {
-        var instructions;
+        var instructions,
+            orders = this.props.orders;
 
         if (this.props.mode === 'initial') {
             instructions = 'Pick a card that you will keep. The other two will become your first set of inaccessible orders.';
         } else if (this.props.mode === 'dummy' && this.state.picked.length >= 3) {
             instructions = 'Pick your dummy player\'s third order.';
+            orders = this.props.dummyOrders;
         } else {
             instructions = 'Pick orders for your minions.';
         }
@@ -40,8 +43,8 @@ module.exports = React.createClass({
                     <div className="panel-body">
                         <div className="selection">
                             <div className="orders">
-                                {this.props.orders.map(function(order){
-                                    var index = this.state.picked.indexOf(order);
+                                {orders.map(function(order){
+                                    var index = orders === this.props.dummyOrders ? -1 : this.state.picked.indexOf(order);
                                     return (
                                         <OrderCard order={order} active={index !== -1} index={index} onClick={this.onClickOrder}/>
                                     );
@@ -87,6 +90,11 @@ module.exports = React.createClass({
 
     onClickOkay: function(e){
         e.preventDefault();
-        this.props.onSubmit(this.state.picked);
+
+        if (this.props.mode === 'dummy') {
+            this.props.onSubmit(this.state.picked.slice(0, 3), this.state.picked.slice(3)[0]);
+        } else {
+            this.props.onSubmit(this.state.picked);
+        }
     }
 });

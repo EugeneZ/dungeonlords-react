@@ -23,6 +23,10 @@ var GameMath = {
         return deck.slice(0, length);
     },
 
+    pullFromSet: function(length, collection, excluded) {
+        return _(collection).difference(excluded).shuffle().slice(0, length).value();
+    },
+
     getFullDeck: function(min, max) {
         var deck = [];
         for (var i = min; i <= max; i++) {

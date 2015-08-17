@@ -14,17 +14,7 @@ module.exports = {
     // A user wants to make a move. This may result in the server making follow-up moves
     move: function(gid, uid, value, cb, fcb){
         getGame(gid, uid, function(game, gameDoc){
-            var newAction;
-            recordMoveValue(game, gameDoc, uid, value, false, function(action){
-                newAction = action;
-                cb(action);
-            }, fcb);
-            if (newAction) {
-                game.pushActions([newAction]);
-                makeServerMovesFn(game, gameDoc, uid, cb, fcb);
-            } else {
-                fcb();
-            }
+            recordMoveValue(game, gameDoc, uid, value, false, cb, fcb);
         }, fcb);
     },
 
@@ -53,20 +43,17 @@ function getGame(gid, uid, cb, fcb) {
 }
 
 function makeServerMovesFn(game, gameDoc, uid, cb, fcb) {
-    var moves = game.getServerMoves();
-    if (moves && moves.length) {
-        var newActions = [];
-        moves.forEach(function(move){
-            recordMoveValue(game, gameDoc, uid, move, true, function(action, i){
-                newActions.push(action);
-                if (i === moves.length - 1) {
-                    game.pushActions(newActions);
-                    if (cb) {
-                        cb(newActions);
-                    }
-                }
-            }, fcb);
-        });
+    var move = game.getServerMoves();
+    if (move && move.length) {
+        move = move[0];
+        recordMoveValue(game, gameDoc, uid, move, true, function(action){
+            if (cb) {
+                cb(action);
+            }
+        }, fcb);
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -80,7 +67,13 @@ function recordMoveValue(game, gameDoc, uid, move, isServer, cb, fcb) {
         user: isServer ? null : uid,
         action: move.type,
         value: move.value
-    }).then(cb, function(err){
+    }).then(function(actionDoc){
+        getGame(gameDoc.id, uid, function(game, gameDoc){
+            if (!makeServerMovesFn(game, gameDoc, uid, cb, fcb)){
+                cb(actionDoc);
+            }
+        }, fcb);
+    }, function(err){
         console.log('error', err);
         fcb(err);
     });
